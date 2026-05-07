@@ -1,0 +1,561 @@
+<style>
+/* ── WORK PANEL ── */
+#work-panel {
+  position:fixed; inset:0; z-index:600;
+  display:none; flex-direction:row;
+  pointer-events:none;
+  overflow:hidden;
+}
+#work-panel.open { pointer-events:all; display:flex; }
+
+/* work panel column lines */
+#work-col-lines-svg {
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  pointer-events:none; z-index:3;
+  overflow:visible;
+}
+
+#work-strips {
+  position:absolute; inset:0;
+  pointer-events:none; z-index:2;
+}
+.wstrip {
+  position:absolute; top:0; bottom:0;
+  height:100%;
+  background:#0a0a0a;
+  transform:translateY(-110vh);
+  will-change:transform;
+}
+
+#work-content {
+  position:relative; z-index:4;
+  display:flex; flex-direction:row;
+  width:100%; height:100%;
+  opacity:0; pointer-events:none;
+  padding:0 !important;
+  box-sizing:border-box;
+}
+#work-content.visible { opacity:1; pointer-events:none; }
+#work-content.visible #work-grid-wrap,
+#work-content.visible #work-page-indicator,
+#work-content.visible .work-panel-close { pointer-events:all; }
+
+/* ── WORK GRID ── */
+#work-grid-wrap {
+  flex:1; min-height:0; overflow:hidden;
+  position:relative; padding-top:0;
+}
+#work-grid {
+  display:flex; width:200%; height:100%;
+  will-change:transform;
+}
+.wg-page {
+  width:50%; height:100%; flex-shrink:0;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  grid-auto-rows:auto;
+  align-content:center;
+  padding:0 0 48px; gap:0;
+  box-sizing:border-box;
+}
+.wg-card {
+  position:relative; overflow:visible;
+  cursor:none; pointer-events:all;
+  display:flex; flex-direction:column;
+}
+.wg-img-wrap {
+  width:100%; aspect-ratio:16/9;
+  overflow:hidden; flex-shrink:0;
+  clip-path:inset(0 100% 0 0);
+  will-change:clip-path;
+}
+.wg-img {
+  width:100%; height:100%; object-fit:cover;
+  transform:scale(1.08);
+  transition:transform 0.7s cubic-bezier(.16,1,.3,1);
+  display:block;
+}
+.wg-card:hover .wg-img { transform:scale(1.0); }
+.wg-info {
+  padding:12px 14px 0;
+  display:flex; align-items:baseline;
+  justify-content:space-between; gap:10px;
+  opacity:0; transform:translateY(6px);
+  will-change:opacity,transform;
+}
+.wg-title {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:14px; font-weight:600;
+  color:#fff; letter-spacing:-.01em;
+  flex:1; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis;
+  line-height:1.2;
+}
+.wg-year {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px; color:rgba(255,255,255,.4);
+  letter-spacing:.1em; flex-shrink:0;
+}
+.wg-cta {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px; font-weight:600;
+  color:rgba(255,255,255,.55); letter-spacing:.18em;
+  text-transform:uppercase; text-decoration:none;
+  border-bottom:1px solid rgba(255,255,255,.25);
+  padding-bottom:1px; flex-shrink:0; cursor:none;
+  transition:color .2s, border-color .2s;
+}
+.wg-cta:hover { color:#fff; border-color:rgba(255,255,255,.8); }
+
+#work-page-indicator {
+  position:absolute; bottom:28px; right:40px; left:auto;
+  display:flex; align-items:center; gap:5px; z-index:20;
+  pointer-events:all;
+}
+.wg-dot-item {
+  display:flex; align-items:center; gap:7px;
+  cursor:none;
+}
+.wg-dot {
+  width:5px; height:5px; border-radius:50%;
+  background:rgba(255,255,255,.25);
+  transition:background .3s, transform .3s;
+  flex-shrink:0;
+}
+.wg-dot.active { background:#fff; transform:scale(1.3); }
+.wg-dot-label {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px; font-weight:500; letter-spacing:.12em;
+  color:rgba(255,255,255,.35);
+  transition:color .3s;
+  line-height:1;
+}
+.wg-dot-item.active .wg-dot-label { color:#fff; }
+
+/* nav arrows */
+#work-nav-arrows {
+  position:absolute; bottom:20px; left:40px; right:auto;
+  display:flex; gap:10px; z-index:20;
+  pointer-events:all;
+}
+.wg-arrow {
+  width:40px; height:40px; border-radius:50%;
+  border:1px solid rgba(255,255,255,.3);
+  background:transparent;
+  display:flex; align-items:center; justify-content:center;
+  cursor:none;
+  transition:background .25s, border-color .25s;
+}
+.wg-arrow:hover { background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.8); }
+.wg-arrow svg { display:block; }
+
+/* ── WORK PANEL CHECKERBOARD BACKGROUND ── */
+#work-bg-grid {
+  position:absolute; inset:0;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  grid-template-rows:80px 1fr 1fr;
+  z-index:0; pointer-events:none;
+  background:#0a0a0a;
+  opacity:0;
+}
+.wbg-cell { }
+
+/* ── WORK TYPOGRAPHIC ELEMENT ── */
+#work-typo-wrap {
+  position:absolute; bottom:96px; left:40px;
+  pointer-events:none; z-index:2;
+  opacity:0;
+  transition:opacity .4s ease .15s;
+}
+#work-content.visible #work-typo-wrap { opacity:1; }
+#work-typo-wrap svg { width:240px; height:auto; display:block; }
+
+/* ── PAGE INDICATOR TEXT FORMAT ── */
+#wg-cur-page {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px; font-weight:700; letter-spacing:.1em;
+  color:#fff; line-height:1;
+}
+.wg-pi-sep, #wg-tot-page {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px; font-weight:400; letter-spacing:.1em;
+  color:rgba(255,255,255,.35); line-height:1;
+}
+
+/* ── Panel close button ── */
+.work-panel-close {
+  position:absolute; top:28px; right:40px; z-index:20;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px; font-weight:700; letter-spacing:.22em;
+  text-transform:uppercase; background:none; border:none;
+  border-bottom:1px solid; padding-bottom:2px;
+  cursor:none; outline:none;
+  pointer-events:all;
+  opacity:0;
+  transition:opacity .3s ease, color .2s, border-color .2s;
+}
+#work-content.visible .work-panel-close { opacity:1; }
+#work-panel .work-panel-close       { color:rgba(255,255,255,.55); border-color:rgba(255,255,255,.3); }
+#work-panel .work-panel-close:hover { color:#fff; border-color:#fff; }
+</style>
+
+<!-- WORK PANEL -->
+<div id="work-panel">
+  <!-- Checkerboard background: 5 cols × 3 rows = 15 cells -->
+  <div id="work-bg-grid">
+    <div class="wbg-cell"></div><div class="wbg-cell"></div><div class="wbg-cell"></div><div class="wbg-cell"></div><div class="wbg-cell"></div>
+    <div class="wbg-cell"></div><div class="wbg-cell"></div><div class="wbg-cell"></div><div class="wbg-cell"></div><div class="wbg-cell"></div>
+    <div class="wbg-cell"></div><div class="wbg-cell"></div><div class="wbg-cell"></div><div class="wbg-cell"></div><div class="wbg-cell"></div>
+  </div>
+  <svg id="work-col-lines-svg" aria-hidden="true">
+    <path stroke="rgba(255,255,255,.15)" stroke-width="1" fill="none"/>
+    <path stroke="rgba(255,255,255,.15)" stroke-width="1" fill="none"/>
+    <path stroke="rgba(255,255,255,.15)" stroke-width="1" fill="none"/>
+    <path stroke="rgba(255,255,255,.15)" stroke-width="1" fill="none"/>
+  </svg>
+  <div id="work-strips"></div>
+  <div id="work-content">
+    <button class="panel-close work-panel-close" id="work-close-btn">CLOSE &nbsp;✕</button>
+    <div id="work-grid-wrap">
+      <div id="work-grid">
+        <div class="wg-page" id="wg-page-1"></div>
+        <div class="wg-page" id="wg-page-2"></div>
+      </div>
+    </div>
+    <!-- WORK typographic element — bottom left -->
+    <div id="work-typo-wrap">
+      <svg width="219" height="112" viewBox="0 0 219 112" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M170.611 44.8001V0.768066H184.755V19.5841L200.435 0.768066H217.971L202.163 18.8801L218.291 44.8001H201.587L192.243 28.3521L184.755 35.5841V44.8001H170.611Z" fill="#FF5C02"/>
+        <path d="M120.798 44.8001V0.768066H148.382C151.668 0.768066 154.398 1.4294 156.574 2.75207C158.793 4.07473 160.457 5.80273 161.566 7.93607C162.676 10.0694 163.23 12.3734 163.23 14.8481C163.23 17.6641 162.569 20.1814 161.246 22.4001C159.924 24.5761 158.132 26.3254 155.87 27.6481L164.51 44.8001H148.638L141.918 30.0161H134.942V44.8001H120.798ZM134.942 20.2241H144.862C145.972 20.2241 146.91 19.7974 147.678 18.9441C148.446 18.0481 148.83 16.8747 148.83 15.4241C148.83 14.5281 148.66 13.7387 148.318 13.0561C147.977 12.3734 147.508 11.8401 146.91 11.4561C146.313 11.0294 145.63 10.8161 144.862 10.8161H134.942V20.2241Z" fill="#FF5C02"/>
+        <path d="M89.3739 45.568C84.3819 45.568 80.1152 44.7147 76.5739 43.008C73.0325 41.3013 70.3232 38.7627 68.4459 35.392C66.5686 31.9787 65.6299 27.776 65.6299 22.784C65.6299 17.7493 66.5686 13.5467 68.4459 10.176C70.3232 6.80534 73.0325 4.26667 76.5739 2.56C80.1152 0.853334 84.3819 0 89.3739 0C94.4086 0 98.6966 0.853334 102.238 2.56C105.779 4.26667 108.489 6.80534 110.366 10.176C112.243 13.5467 113.182 17.7493 113.182 22.784C113.182 27.776 112.243 31.9787 110.366 35.392C108.489 38.7627 105.779 41.3013 102.238 43.008C98.6966 44.7147 94.4086 45.568 89.3739 45.568ZM89.3739 35.008C90.9099 35.008 92.2539 34.7733 93.4059 34.304C94.6006 33.792 95.5819 33.088 96.3499 32.192C97.1606 31.296 97.7579 30.2293 98.1419 28.992C98.5259 27.712 98.7179 26.3253 98.7179 24.832V20.736C98.7179 19.2427 98.5259 17.8773 98.1419 16.64C97.7579 15.36 97.1606 14.272 96.3499 13.376C95.5819 12.48 94.6006 11.7973 93.4059 11.328C92.2539 10.816 90.9099 10.56 89.3739 10.56C87.8379 10.56 86.4726 10.816 85.2779 11.328C84.1259 11.7973 83.1659 12.48 82.3979 13.376C81.6299 14.272 81.0539 15.36 80.6699 16.64C80.2859 17.8773 80.0939 19.2427 80.0939 20.736V24.832C80.0939 26.3253 80.2859 27.712 80.6699 28.992C81.0539 30.2293 81.6299 31.296 82.3979 32.192C83.1659 33.088 84.1259 33.792 85.2779 34.304C86.4726 34.7733 87.8379 35.008 89.3739 35.008Z" fill="#FF5C02"/>
+        <path d="M10.6238 44.8001L0.319824 0.768066H15.0398L18.8798 19.5841C18.9652 19.9254 19.0718 20.4587 19.1998 21.1841C19.3278 21.8667 19.4772 22.6347 19.6478 23.4881C19.8185 24.2987 19.9678 25.0454 20.0958 25.7281H20.3518C20.4372 25.3441 20.5225 24.8961 20.6078 24.3841C20.7358 23.8294 20.8425 23.2747 20.9278 22.7201C21.0558 22.1654 21.1625 21.6107 21.2478 21.0561C21.3758 20.5014 21.4825 20.0107 21.5678 19.5841L25.3438 0.768066H39.2958L43.3278 19.5841C43.4132 20.0107 43.5198 20.5867 43.6478 21.3121C43.8185 22.0374 43.9892 22.8054 44.1598 23.6161C44.3305 24.3841 44.4798 25.0881 44.6078 25.7281H44.8638C44.9492 25.3014 45.0345 24.8321 45.1198 24.3201C45.2478 23.7654 45.3545 23.2107 45.4398 22.6561C45.5252 22.1014 45.6105 21.5681 45.6958 21.0561C45.8238 20.5014 45.9305 20.0107 46.0158 19.5841L49.5998 0.768066H63.6798L53.3758 44.8001H37.8238L33.4718 24.1921C33.3865 23.6374 33.2585 22.9974 33.0878 22.2721C32.9172 21.5041 32.7465 20.7361 32.5758 19.9681C32.4052 19.2001 32.2558 18.5387 32.1278 17.9841H31.8718C31.7438 18.4961 31.5945 19.1361 31.4238 19.9041C31.2958 20.6294 31.1465 21.3761 30.9758 22.1441C30.8052 22.8694 30.6558 23.5521 30.5278 24.1921L26.1758 44.8001H10.6238Z" fill="#FF5C02"/>
+        <path d="M64.1161 72.4401C61.4281 70.0081 59.9561 67.3201 59.9561 63.9921C59.9561 57.7201 64.9481 54.4561 72.5641 54.4561C75.4441 54.4561 78.5161 54.9681 80.5001 55.8001L78.7081 62.8401C77.3641 62.3921 76.3401 62.2641 75.1881 62.2641C72.3081 62.2641 70.7721 63.7361 70.7721 66.2321C70.7721 68.4721 72.0521 70.7761 74.2921 72.4401H64.1161Z" fill="#FF5C02"/>
+        <path d="M97.1385 80.8241H76.2745V87.6721C78.1945 86.7121 80.1145 86.2001 82.8025 86.2001C89.8425 86.2001 94.4505 90.4881 94.4505 97.6561C94.4505 101.624 93.2345 105.656 89.7145 110.52L79.9225 105.208C81.9065 102.648 83.1225 100.408 83.1225 97.9761C83.1225 95.9281 82.0985 94.9681 80.4345 94.9681C78.7065 94.9681 77.1065 95.9921 76.2745 97.1441V111.8H64.9465V105.272C62.4505 106.488 59.5705 107.128 56.4985 107.128C47.7945 107.128 42.3545 102.712 42.3545 95.1601C42.3545 87.7361 47.5385 83.6401 56.5625 83.6401C58.8025 83.6401 61.0425 83.8321 63.2185 84.2161L62.2585 92.8561C61.0425 92.6001 59.6985 92.4721 58.2905 92.4721C55.3465 92.4721 53.6825 93.5601 53.6825 95.4161C53.6825 97.2721 55.1545 98.2321 57.6505 98.2321C60.5945 98.2321 63.2185 96.5681 64.9465 94.6481V80.8241H40.5625V71.9921H97.1385V80.8241Z" fill="#FF5C02"/>
+        <path d="M41.536 80.8241H36.096V111.8H24.768V105.4C22.528 106.488 19.84 107.128 16.704 107.128C7.296 107.128 1.792 102.968 1.792 95.0961C1.792 87.8641 6.912 83.6401 16 83.6401C18.816 83.6401 21.056 83.8961 23.04 84.3441L22.08 92.8561C20.864 92.6001 19.52 92.4721 17.984 92.4721C14.72 92.4721 13.12 93.5601 13.12 95.4161C13.12 97.2721 14.912 98.2321 17.536 98.2321C20.288 98.2321 23.232 96.8881 24.768 94.6481V80.8241H0V71.9921H41.536V80.8241Z" fill="#FF5C02"/>
+      </svg>
+    </div>
+    <!-- arrows LEFT -->
+    <div id="work-nav-arrows">
+      <button class="wg-arrow" id="wg-prev" aria-label="Previous">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M9 2L4 7L9 12" stroke="rgba(255,255,255,.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="wg-arrow" id="wg-next" aria-label="Next">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M5 2L10 7L5 12" stroke="rgba(255,255,255,.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <!-- page indicator RIGHT -->
+    <div id="work-page-indicator">
+      <span id="wg-cur-page">01</span>
+      <span class="wg-pi-sep">/</span>
+      <span id="wg-tot-page">02</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Shuffle helper
+  function shuffled(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  const workPanel    = document.getElementById('work-panel');
+  const workStripsEl = document.getElementById('work-strips');
+  const workContent  = document.getElementById('work-content');
+
+  // ── WORK GRID SYSTEM ──
+  const workGridEl  = document.getElementById('work-grid');
+  const wgPage1     = document.getElementById('wg-page-1');
+  const wgPage2     = document.getElementById('wg-page-2');
+  let   wgCurPage   = 0;
+  let   wgScrollLock = false;
+
+  // Grid placements
+  const WG_PLACES = [
+    { col:'1/3', row:'1/3', page:0 },
+    { col:'5/6', row:'1/2', page:0 },
+    { col:'4/5', row:'2/3', page:0 },
+    { col:'3/4', row:'3/4', page:0 },
+    { col:'5/6', row:'3/4', page:0 },
+    { col:'2/4', row:'1/3', page:1 },
+    { col:'1/2', row:'2/3', page:1 },
+    { col:'4/5', row:'3/4', page:1 },
+  ];
+
+  // Navigate to project page with strip wipe-out transition
+  window.navigateToProject = function(i) {
+    window.closeWork();
+    setTimeout(function() {
+      window.location.href = 'project-' + (i + 1) + '.html';
+    }, 800);
+  };
+
+  // Build grid cards from PROJECTS (global)
+  PROJECTS.forEach((p, i) => {
+    const pl   = WG_PLACES[i];
+    const year = p.meta.split('·').pop().trim();
+    const card = document.createElement('div');
+    card.className = 'wg-card';
+    card.style.gridColumn = pl.col;
+    card.style.gridRow    = pl.row;
+    card.innerHTML = `
+      <div class="wg-img-wrap">
+        <img class="wg-img" src="${p.img}" alt="${p.title}" loading="lazy">
+      </div>
+      <div class="wg-info">
+        <span class="wg-title">${p.title}</span>
+        <span class="wg-year">${year}</span>
+        <a class="wg-cta" href="#">VIEW ↗</a>
+      </div>
+    `;
+    card.addEventListener('click', e => {
+      e.preventDefault();
+      const rect = card.querySelector('.wg-img-wrap').getBoundingClientRect();
+      if (typeof window.openProject === 'function') {
+        window.openProject(i, rect);
+      }
+    });
+    card.addEventListener('mouseenter', () => document.body.classList.add('chov'));
+    card.addEventListener('mouseleave', () => document.body.classList.remove('chov'));
+    (pl.page === 0 ? wgPage1 : wgPage2).appendChild(card);
+  });
+
+  // Animate cards in — left to right, as if emerging from behind the vertical grid lines
+  function animateWgPage(pageEl, baseDelay) {
+    baseDelay = baseDelay || 0;
+    // Sort cards by their grid-column start so stagger fires left → right
+    const cards = [...pageEl.querySelectorAll('.wg-card')].sort((a, b) => {
+      const colA = parseInt(a.style.gridColumn) || 1;
+      const colB = parseInt(b.style.gridColumn) || 1;
+      return colA - colB;
+    });
+    cards.forEach((card, i) => {
+      const imgWrap = card.querySelector('.wg-img-wrap');
+      const info    = card.querySelector('.wg-info');
+      const delay   = baseDelay + i * 0.13;
+      gsap.fromTo(imgWrap,
+        { clipPath: 'inset(0% 100% 0% 0%)' },
+        { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.85, ease: 'expo.out', delay }
+      );
+      gsap.to(info, { opacity:1, y:0, duration:0.55, ease:'expo.out', delay: delay + 0.38 });
+    });
+  }
+
+  // Reset a page's cards to initial hidden state
+  function resetWgPage(pageEl) {
+    pageEl.querySelectorAll('.wg-img-wrap').forEach(el => gsap.set(el, { clipPath:'inset(0% 100% 0% 0%)' }));
+    pageEl.querySelectorAll('.wg-info').forEach(el => gsap.set(el, { opacity:0, y:6 }));
+  }
+
+  // Navigate between pages
+  function gotoWgPage(page) {
+    if (page < 0 || page > 1 || wgScrollLock) return;
+    wgScrollLock = true;
+    wgCurPage = page;
+    gsap.to(workGridEl, {
+      x: page === 0 ? '0%' : '-50%',
+      duration:1.0, ease:'expo.inOut',
+      onComplete: () => { wgScrollLock = false; }
+    });
+    const curPageEl = document.getElementById('wg-cur-page');
+    if (curPageEl) curPageEl.textContent = (page + 1).toString().padStart(2, '0');
+    if (page === 1) {
+      resetWgPage(wgPage2);
+      animateWgPage(wgPage2, 0.20);
+    } else {
+      resetWgPage(wgPage1);
+      animateWgPage(wgPage1, 0.20);
+    }
+  }
+
+  // Build strips for work panel — 5 strips matching the 5 grid columns (0/20/40/60/80%)
+  const COL_FRACS = [0, 0.20, 0.40, 0.60, 0.80];
+  let wStrips = [];
+  function buildWorkStrips() {
+    workStripsEl.innerHTML = '';
+    wStrips = [];
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    COL_FRACS.forEach((frac, i) => {
+      const left  = Math.round(frac * vw);
+      const right = i < COL_FRACS.length - 1 ? Math.round(COL_FRACS[i + 1] * vw) : vw;
+      const s = document.createElement('div');
+      s.className = 'wstrip';
+      s.style.left  = left + 'px';
+      s.style.width = (right - left) + 'px';
+      gsap.set(s, { y: -vh });
+      workStripsEl.appendChild(s);
+      wStrips.push(s);
+    });
+  }
+  buildWorkStrips();
+
+  const workBgGrid = document.getElementById('work-bg-grid');
+
+  window.openWork = function openWork() {
+    const vh = window.innerHeight;
+    workPanel.classList.add('open');
+    document.body.classList.add('about-open');
+    document.body.classList.add('work-panel-open');
+    workContent.classList.remove('visible');
+
+    gsap.set(workBgGrid, { opacity: 0 });
+    wStrips.forEach(s => gsap.set(s, { y: -vh, opacity: 1 }));
+
+    const ordered = shuffled([...wStrips]);
+    const total   = ordered.length;
+    const dur     = 0.55;
+
+    ordered.forEach((s, i) => {
+      const delay = (i / total) * dur * 0.6;
+      gsap.fromTo(s,
+        { y: -vh },
+        { y: 0, duration: 0.42, ease: 'expo.out', delay }
+      );
+    });
+
+    gsap.delayedCall(dur * 0.55 + 0.12, () => {
+      gsap.to(workBgGrid, { opacity: 1, duration: 0.25 });
+      workContent.classList.add('visible');
+      animateWgPage(wgPage1, 0.08);
+    });
+
+    gsap.to(wStrips, { opacity: 0, duration: 0.5, delay: dur * 0.55 + 0.18 });
+  };
+
+  window.closeWork = function closeWork() {
+    const vh = window.innerHeight;
+    document.body.classList.remove('cursor-close-work');
+
+    gsap.killTweensOf(wStrips);
+    wStrips.forEach(s => gsap.set(s, { y: 0, opacity: 1 }));
+    gsap.to(workBgGrid, { opacity: 0, duration: 0.20 });
+
+    gsap.to(workContent, { opacity: 0, duration: 0.30, ease: 'power2.out' });
+
+    const ordered = shuffled([...wStrips]);
+    const total   = ordered.length;
+    const dur     = 0.60;
+
+    ordered.forEach((s, i) => {
+      const delay = (i / total) * dur * 0.45;
+      gsap.fromTo(s,
+        { y: 0 },
+        { y: -vh, duration: 0.48, ease: 'power3.out', delay }
+      );
+    });
+
+    gsap.delayedCall(dur * 0.45 + 0.30, () => {
+      workContent.classList.remove('visible');
+      workPanel.classList.remove('open');
+      document.body.classList.remove('about-open');
+      document.body.classList.remove('work-panel-open');
+      wStrips.forEach(s => gsap.set(s, { y: -vh, opacity: 1 }));
+      gsap.set(workBgGrid, { opacity: 0 });
+      gsap.set(workContent, { clearProps: 'opacity' });
+      wgCurPage = 0;
+      gsap.set(workGridEl, { x: '0%' });
+      const curPageEl = document.getElementById('wg-cur-page');
+      if (curPageEl) curPageEl.textContent = '01';
+      resetWgPage(wgPage1);
+      resetWgPage(wgPage2);
+    });
+  };
+
+  // Arrow nav
+  document.getElementById('wg-prev').addEventListener('click', () => gotoWgPage(0));
+  document.getElementById('wg-next').addEventListener('click', () => gotoWgPage(1));
+  ['wg-prev','wg-next'].forEach(id => {
+    const btn = document.getElementById(id);
+    btn.addEventListener('mouseenter', () => document.body.classList.add('chov'));
+    btn.addEventListener('mouseleave', () => document.body.classList.remove('chov'));
+  });
+
+  // Wheel to page through grid
+  document.getElementById('work-grid-wrap').addEventListener('wheel', e => {
+    if (e.deltaY > 20 && wgCurPage === 0) gotoWgPage(1);
+    if (e.deltaY < -20 && wgCurPage === 1) gotoWgPage(0);
+  }, { passive:true });
+
+  const workCloseBtn = document.getElementById('work-close-btn');
+  workCloseBtn.addEventListener('click', () => window.closeWork());
+  workCloseBtn.addEventListener('mouseenter', () => document.body.classList.add('chov'));
+  workCloseBtn.addEventListener('mouseleave', () => document.body.classList.remove('chov'));
+
+  workStripsEl.addEventListener('click', () => window.closeWork());
+  workStripsEl.addEventListener('mouseenter', () => document.body.classList.add('cursor-close-work'));
+  workStripsEl.addEventListener('mouseleave', () => document.body.classList.remove('cursor-close-work'));
+
+  // Escape key for work panel
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && workPanel.classList.contains('open')) {
+      window.closeWork();
+    }
+  });
+
+  // Work panel column line cursor bend
+  (function initWorkColLines() {
+    const svg = document.getElementById('work-col-lines-svg');
+    if (!svg) return;
+    const colPaths = [...svg.querySelectorAll('path')];
+    const FRACS    = [0.20, 0.40, 0.60, 0.80];
+    const SEGS     = 60;
+    const H_RADIUS = 280;
+    const SIGMA_Y  = 220;
+    const MAX_DISP = 14;
+    const TWO_SIG2 = 2 * SIGMA_Y * SIGMA_Y;
+
+    let clx = window.innerWidth / 2, cly = window.innerHeight / 2;
+
+    // Listen to mousemove on document to get mx/my
+    // mx/my are defined in index.html but we can track locally here
+    let _mx = window.innerWidth / 2, _my = window.innerHeight / 2;
+    document.addEventListener('mousemove', function(e) { _mx = e.clientX; _my = e.clientY; }, { passive: true });
+
+    function tick() {
+      const panel = document.getElementById('work-panel');
+      if (!panel || !panel.classList.contains('open')) {
+        requestAnimationFrame(tick); return;
+      }
+      const w = panel.offsetWidth;
+      const h = panel.offsetHeight;
+
+      clx += (_mx - clx) * 0.08;
+      cly += (_my - cly) * 0.08;
+
+      FRACS.forEach((frac, idx) => {
+        const lx      = frac * w;
+        const dx      = clx - lx;
+        const hfactor = Math.max(0, 1 - Math.abs(dx) / H_RADIUS);
+        const disp    = dx * MAX_DISP / H_RADIUS * hfactor * hfactor;
+
+        let d = `M ${lx} 0`;
+        for (let i = 1; i <= SEGS; i++) {
+          const y    = (i / SEGS) * h;
+          const dy   = cly - y;
+          const gaus = Math.exp(-(dy * dy) / TWO_SIG2);
+          d += ` L ${(lx + disp * gaus).toFixed(2)} ${y}`;
+        }
+        colPaths[idx].setAttribute('d', d);
+      });
+
+      requestAnimationFrame(tick);
+    }
+    tick();
+  })();
+
+
+  window.workLoaded = true;
+})();
+</script>

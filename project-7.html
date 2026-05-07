@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel App — Arun Somasekharan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg: #0a0a0a;
+  --fg: #f5f4f0;
+  --accent: #ff5c00;
+  --dim: rgba(245,244,240,0.45);
+}
+html, body {
+  width:100%; min-height:100%;
+  background:var(--bg);
+  color:var(--fg);
+  font-family:'IBM Plex Mono', monospace;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+#wipe-strips {
+  position:fixed; inset:0;
+  z-index:1000;
+  pointer-events:none;
+}
+.pstrip {
+  position:absolute; top:0; bottom:0;
+  width:24px; height:100%;
+  background:#0a0a0a;
+  will-change:transform;
+}
+nav {
+  position:fixed; top:0; left:0; right:0;
+  padding:28px 40px 0;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  z-index:700;
+}
+.nlogo {
+  display:block;
+  text-decoration:none;
+  line-height:1;
+  color:var(--fg);
+}
+.nlogo svg { display:block; width:91px; height:28px; }
+#back-btn {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px; font-weight:700;
+  letter-spacing:.2em; text-transform:uppercase;
+  color:var(--fg); background:none; border:none;
+  border-bottom:1px solid rgba(245,244,240,.4);
+  padding-bottom:3px; cursor:pointer;
+  transition:color .2s, border-color .2s;
+  line-height:1;
+}
+#back-btn:hover { color:var(--accent); border-color:var(--accent); }
+#project-hero {
+  width:100%; height:100vh;
+  position:relative; overflow:hidden;
+}
+#project-hero img {
+  width:100%; height:100%;
+  object-fit:cover; display:block;
+}
+#hero-overlay {
+  position:absolute; inset:0;
+  background:linear-gradient(to bottom, rgba(10,10,10,0.1) 0%, rgba(10,10,10,0.55) 100%);
+}
+#project-body {
+  max-width:860px;
+  margin:0 auto;
+  padding:96px 40px 120px;
+  opacity:0;
+}
+#project-title {
+  font-family:'Space Grotesk', sans-serif;
+  font-size:clamp(36px, 5vw, 72px);
+  font-weight:700;
+  letter-spacing:-.02em;
+  line-height:1.05;
+  color:var(--fg);
+  margin-bottom:24px;
+}
+#project-meta {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:clamp(10px, 1.1vw, 13px);
+  font-weight:400;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--dim);
+  margin-bottom:64px;
+}
+.project-divider {
+  width:48px; height:2px;
+  background:var(--accent);
+  margin-bottom:48px;
+}
+#project-desc {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:clamp(14px, 1.4vw, 18px);
+  font-weight:400;
+  line-height:1.75;
+  color:rgba(245,244,240,0.65);
+}
+</style>
+</head>
+<body>
+
+<div id="wipe-strips"></div>
+
+<nav>
+  <a href="index.html" class="nlogo">
+    <svg width="91" height="28" viewBox="0 0 91 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M67.6396 0.123047H73.0713L80.7754 9.01465C80.9914 9.25464 81.2797 9.60262 81.6396 10.0586C81.9996 10.5146 82.3597 10.9829 82.7197 11.4629C83.1037 11.9188 83.392 12.2911 83.584 12.5791L83.7637 12.5068C83.7397 11.8348 83.7275 11.1744 83.7275 10.5264V0.123047H90.9639V24.8906H84.2314L75.5557 14.9902C75.1478 14.5103 74.7997 14.0783 74.5117 13.6943C74.2238 13.2865 73.9475 12.9029 73.6836 12.543L73.5039 12.6143C73.5279 13.0702 73.54 13.5265 73.54 13.9824V24.8906H66.3037V5.74414H43.4561C43.7058 6.61827 43.9141 7.65921 43.9141 8.99121V9.40723C44.4552 9.61534 44.9962 9.8235 45.4541 10.0732C46.8277 8.61637 48.9507 7.86719 51.4482 7.86719C57.1508 7.86722 60.4804 11.1138 63.3525 19.5635L57.8164 21.4365C55.1109 14.6103 54.0702 13.0703 51.7393 13.0703C50.6988 13.0704 49.9913 13.528 49.9912 14.3604C49.9912 15.2761 50.6989 15.6514 51.6562 15.6514C52.4055 15.6514 53.03 15.4847 53.6543 15.1934L55.2773 19.7305C54.1536 20.3963 52.6552 20.7705 50.9072 20.7705C46.4119 20.7705 43.9971 18.2319 43.8721 14.6523C43.331 14.4026 42.7485 14.1942 42.041 14.0693C41.0004 15.2764 39.5018 16.2338 37.7119 16.9414C39.8763 18.8144 42.0408 20.4793 44.6631 22.4355L39.627 27.0977C35.0898 23.3514 31.5927 19.98 29.5947 17.2744C28.346 15.5679 27.7637 14.1941 27.7637 12.7373C27.7637 10.6561 29.2623 9.32422 31.4268 9.32422C32.8834 9.32428 34.1319 9.86509 35.3389 10.8223C36.1714 10.073 36.5469 9.15695 36.5469 7.9082C36.5468 7.11756 36.4219 6.40998 36.2139 5.74414H20.3389L27.3232 24.8906H18.8994L17.8555 21.3984H9.17969L8.13574 24.8906H0L9.03516 0.123047H15.6396V0H67.6396V0.123047ZM13.3916 7.03516C13.2956 7.46703 13.164 7.95897 12.9961 8.51074C12.8521 9.06265 12.6953 9.63839 12.5273 10.2383C12.3594 10.8143 12.1914 11.3666 12.0234 11.8945L10.8359 15.8545H16.2354L15.0479 11.8945C14.9519 11.6065 14.8436 11.2586 14.7236 10.8506C14.6036 10.4426 14.4833 10.0107 14.3633 9.55469C14.2433 9.09873 14.1239 8.65462 14.0039 8.22266C13.884 7.76686 13.7757 7.37106 13.6797 7.03516H13.3916Z" fill="currentColor"/>
+    </svg>
+  </a>
+  <button id="back-btn">← Back</button>
+</nav>
+
+<div id="project-hero">
+  <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1400&q=88" alt="Travel App">
+  <div id="hero-overlay"></div>
+</div>
+
+<div id="project-body">
+  <div id="project-title">Travel App</div>
+  <div id="project-meta">Mobile UX · Branding · 2021</div>
+  <div class="project-divider"></div>
+  <div id="project-desc">Project details coming soon.</div>
+</div>
+
+<script>
+(function() {
+  const wipeEl = document.getElementById('wipe-strips');
+  const STRIP_W = 24;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const count = Math.ceil(vw / STRIP_W) + 2;
+  const strips = [];
+
+  function shuffled(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('div');
+    s.className = 'pstrip';
+    s.style.left = (i * STRIP_W) + 'px';
+    gsap.set(s, { y: 0 });
+    wipeEl.appendChild(s);
+    strips.push(s);
+  }
+
+  function pageEnter() {
+    const ordered = shuffled([...strips]);
+    const total   = ordered.length;
+    const dur     = 0.55;
+
+    ordered.forEach((s, i) => {
+      const delay = (i / total) * dur * 0.6;
+      gsap.fromTo(s,
+        { y: 0 },
+        { y: vh, duration: 0.42, ease: 'expo.out', delay }
+      );
+    });
+
+    gsap.delayedCall(dur * 0.55 + 0.20, () => {
+      gsap.to('#project-body', { opacity: 1, y: 0, duration: 0.7, ease: 'expo.out' });
+    });
+  }
+
+  function pageExit(cb) {
+    gsap.to('#project-body', { opacity: 0, duration: 0.25, ease: 'power2.in' });
+    strips.forEach(s => gsap.set(s, { y: vh }));
+
+    const ordered = shuffled([...strips]);
+    const total   = ordered.length;
+    const dur     = 0.55;
+
+    ordered.forEach((s, i) => {
+      const delay = (i / total) * dur * 0.6;
+      gsap.fromTo(s,
+        { y: vh },
+        { y: 0, duration: 0.42, ease: 'expo.out', delay }
+      );
+    });
+
+    gsap.delayedCall(dur * 0.55 + 0.15, cb);
+  }
+
+  gsap.set('#project-body', { opacity: 0, y: 0 });
+  pageEnter();
+
+  document.getElementById('back-btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    pageExit(function() {
+      window.location.href = 'index.html';
+    });
+  });
+
+  document.querySelector('.nlogo').addEventListener('click', function(e) {
+    e.preventDefault();
+    pageExit(function() {
+      window.location.href = 'index.html';
+    });
+  });
+})();
+</script>
+</body>
+</html>

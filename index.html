@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arun Somasekharan — UI/UX Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:  #f6f4f2;
+  --ink: #0e0e0e;
+  --dim: #999;
+}
+html, body {
+  width:100%; height:100%;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'IBM Plex Mono', monospace;
+  overflow:hidden;
+  cursor:none;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── CURSOR ── */
+#cdot {
+  position:fixed; width:7px; height:7px; top:0; left:0;
+  background:var(--ink); border-radius:50%;
+  pointer-events:none; z-index:9999;
+  will-change:transform;
+  transition: background .2s, width .2s, height .2s;
+}
+#cring {
+  position:fixed; width:30px; height:30px; top:0; left:0;
+  border:1px solid rgba(14,14,14,.22);
+  border-radius:50%; pointer-events:none; z-index:9998;
+  will-change:transform;
+  transition: width .28s cubic-bezier(.16,1,.3,1),
+              height .28s cubic-bezier(.16,1,.3,1),
+              border-color .25s, border-width .25s;
+}
+/* hover state — orange dot + expanded ring */
+body.chov #cdot  { background: #ff5c00; width:7px; height:7px; }
+body.chov #cring { width:50px; height:50px; border-color:rgba(255,92,0,.5); }
+/* about panel open — white ring */
+body.about-open #cring { border-color:rgba(255,255,255,.35); }
+body.about-open.chov #cring { border-color:rgba(255,255,255,.7); width:50px; height:50px; }
+body.about-open #cdot { background:#f6f4f2; }
+body.about-open.chov #cdot { background:#ff5c00; }
+
+/* ── STAGE ── */
+#stage { position:fixed; inset:0; overflow:hidden; }
+
+/* ── COLUMN GRID LINES — drawn via SVG for cursor interaction ── */
+#col-lines-svg {
+  position:fixed; inset:0;
+  width:100%; height:100%;
+  pointer-events:none;
+  z-index:0;
+  overflow:visible;
+}
+
+/* ── NAV ── */
+nav {
+  position:fixed; top:0; left:0; right:0;
+  padding:28px 40px 0;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  z-index:700; pointer-events:none;
+}
+.nlogo {
+  display:block;
+  pointer-events:all; text-decoration:none; cursor:none;
+  line-height:1;
+  color:var(--ink);  /* SVG uses currentColor */
+}
+.nlogo svg { display:block; width:91px; height:28px; }
+.nwork {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--ink);
+  border-bottom:1px solid var(--ink);
+  padding-bottom:3px;
+  pointer-events:all; text-decoration:none; cursor:none;
+  line-height:1;
+  transition: color .2s, border-color .2s;
+}
+.nwork:hover { color:#ff5c00; border-color:#ff5c00; }
+
+/* ── ABOUT ME TRIGGER (bottom-right) ── */
+#about-trigger {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--ink);
+  background:none;
+  border:none;
+  border-bottom:1px solid var(--ink);
+  padding-bottom:3px;
+  cursor:none;
+  pointer-events:all;
+  opacity:0;
+  white-space:nowrap;
+  line-height:1;
+  transition: color .2s, border-color .2s, opacity .2s;
+}
+#about-trigger:hover { color:#ff5c00 !important; border-color:#ff5c00 !important; opacity:1 !important; }
+
+/* About panel CSS is in about.html fragment */
+
+/* ── Hide all hbot + nav links when overlay is open ── */
+body.overlay-open .nwork,
+body.overlay-open #about-trigger,
+body.overlay-open .hdesc,
+body.overlay-open .hbot-right     { visibility:hidden; pointer-events:none; }
+
+/* ── Hide nav links + hbot extras when any panel is open ── */
+body.about-open .nwork          { visibility:hidden; pointer-events:none; }
+body.about-open #about-trigger  { visibility:hidden !important; pointer-events:none !important; }
+body.about-open .hdesc          { visibility:hidden; pointer-events:none; }
+body.about-open .hbot-right     { visibility:hidden; pointer-events:none; }
+
+/* ── Panel close buttons ── */
+.panel-close {
+  position:absolute; top:28px; right:40px; z-index:20;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px; font-weight:700; letter-spacing:.22em;
+  text-transform:uppercase; background:none; border:none;
+  border-bottom:1px solid; padding-bottom:2px;
+  cursor:none; outline:none;
+  pointer-events:all;
+  opacity:0;
+  transition:opacity .3s ease, color .2s, border-color .2s;
+}
+#about-content.visible .panel-close { opacity:1; }
+#work-content.visible  .panel-close { opacity:1; }
+
+#about-panel .panel-close       { color:#666; border-color:#444; }
+#about-panel .panel-close:hover { color:#f6f4f2; border-color:#f6f4f2; }
+#work-panel  .panel-close       { color:rgba(255,255,255,.55); border-color:rgba(255,255,255,.3); }
+#work-panel  .panel-close:hover { color:#fff; border-color:#fff; }
+
+/* ── PANEL: nav tint when About or Work panel is open (dark bg) ── */
+body.work-panel-open nav .nlogo         { color:#f6f4f2; }
+body.about-panel-open nav .nlogo        { color:#f6f4f2; }
+body.about-panel-open nav .nwork        { color:rgba(245,244,240,.7); border-bottom-color:rgba(245,244,240,.4); }
+body.about-panel-open nav .nwork:hover  { color:#f6f4f2; border-bottom-color:#f6f4f2; }
+body.about-panel-open #about-trigger    { color:rgba(245,244,240,.7) !important; border-bottom-color:rgba(245,244,240,.4) !important; }
+body.about-panel-open #about-trigger:hover { color:#f6f4f2 !important; border-bottom-color:#f6f4f2 !important; }
+
+/* ── CURSOR CLOSE STATE ── */
+/* Both panels: dot hidden, ring expands with ✕ */
+body.cursor-close #cdot,
+body.cursor-close-work #cdot { opacity:0; width:0; height:0; }
+
+body.cursor-close #cring {
+  width:54px; height:54px;
+  border-color:rgba(245,244,240,.6); border-width:1px;
+}
+body.cursor-close #cring::after {
+  content:'✕';
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; font-family:'IBM Plex Mono',monospace; font-weight:300;
+  color:#f6f4f2;
+}
+body.cursor-close-work #cring {
+  width:54px; height:54px;
+  border-color:rgba(255,255,255,.5); border-width:1px;
+}
+body.cursor-close-work #cring::after {
+  content:'✕';
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; font-family:'IBM Plex Mono',monospace; font-weight:300;
+  color:#f6f4f2;
+}
+
+/* ── CLOSE LABEL — follows cursor when in close zone ── */
+#clabel {
+  position:fixed; top:0; left:0; z-index:9997; pointer-events:none; will-change:transform;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:8px; font-weight:700; letter-spacing:.22em;
+  text-transform:uppercase;
+  opacity:0;
+  transition: opacity .18s ease;
+  white-space:nowrap;
+}
+body.cursor-close      #clabel { opacity:1; color:#f6f4f2; }
+body.cursor-close-work #clabel { opacity:1; color:#f6f4f2; }
+
+/* Work panel CSS is in work.html fragment */
+
+/* Right: hover image preview — same 254×159 ratio (1.597:1) */
+#work-preview {
+  position:fixed;
+  top:0; left:0;
+  pointer-events:none;
+  z-index:8;
+  width:clamp(280px, 30vw, 472px);   /* +24% from 380px */
+  will-change:transform;
+  transform:translate(0,0);
+}
+#work-preview-img {
+  width:100%;
+  aspect-ratio:254/159;
+  object-fit:cover;
+  display:block;
+  opacity:0;
+  will-change:transform, opacity;
+}
+
+#orbit-group {
+  position:absolute; inset:0;
+  will-change:transform;
+  z-index:10;
+}
+
+/* ── HERO NAME (solid black layer — always visible on bg) ──
+   Figma: Archivo Bold, large display size
+   z-index 150 — sits above thumbs visually
+   But we want it to show dark on bg AND invert on thumbs.
+   Solution: TWO layers
+     Layer 1 (z=140): black text, BELOW thumbs (z=10–20)
+     Layer 2 (z=160): white text, mix-blend-mode:difference, ABOVE thumbs
+     → On light bg: white difference = dark (near bg colour, so layer 1 shows)
+     → On dark thumb: white difference = white ✓
+   Wait — layer 1 is BELOW thumbs so thumbs cover it.
+   On the AREAS not covered by thumbs, layer 1 is visible as black.
+   On AREAS covered by thumbs, layer 2 (white+difference) is above
+   the thumb and inverts to white. ✓
+── */
+
+/* ── HERO NAME — single layer, always above thumbs, always dark ── */
+/* ── HERO NAME — SVG headline, centred ── */
+.hname {
+  position:absolute;
+  left:50%; top:50%;
+  transform:translate(-50%, -50%);
+  z-index:160;
+  pointer-events:none;
+  width:clamp(480px, 75vw, 1076px);
+}
+.hname svg {
+  width:100%;
+  height:auto;
+  display:block;
+}
+.hname-inv { display:none; }
+/* keep .lw/.li so entrance animation targets still exist but are invisible */
+.lw { overflow:hidden; display:block; height:0; overflow:hidden; }
+.li { display:block; transform:translateY(0); opacity:0; height:0; }
+
+/* ── THUMBNAIL HOVER BLUR SIBLINGS ── */
+/* When hovering any thumb, others blur + dim */
+.thumb .thumb-clip img {
+  filter: blur(0px);   /* explicit start so browser interpolates, not jumps */
+  opacity: 1;
+  transition: filter .55s cubic-bezier(.16,1,.3,1), opacity .55s cubic-bezier(.16,1,.3,1),
+              transform .45s cubic-bezier(.16,1,.3,1);
+  will-change: transform;
+}
+body.thumb-hov .thumb:not(.is-hovered) .thumb-clip img {
+  filter: blur(3px);
+  opacity: 0.35;
+}
+body.thumb-hov .thumb.is-hovered .thumb-clip img {
+  filter: blur(0px);
+  opacity: 1;
+}
+
+/* ── THUMBNAIL HOVER LINE ── */
+.thumb::after {
+  content:'';
+  position:absolute;
+  top:0; right:0;
+  width:3px; height:100%;
+  background:#FD3B34;
+  transform:scaleY(0);
+  transform-origin:bottom center;
+  transition:transform .35s cubic-bezier(.16,1,.3,1);
+  pointer-events:none;
+  z-index:5;
+}
+.thumb.is-hovered::after { transform:scaleY(1); }
+.hbot {
+  position:fixed; bottom:32px; left:0; right:0;
+  padding:0 40px;
+  display:flex; justify-content:space-between; align-items:flex-end;
+  z-index:700; pointer-events:none;
+}
+/* Left column: desc + about me */
+.hbot-left {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:14px;
+}
+/* Right column: shiva + index stacked, right-aligned */
+.hbot-right {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:12px;
+}
+/* "01-08" → Archivo Bold 16px */
+.hidx {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:clamp(11px,1.1vw,16px);
+  font-weight:700;
+  letter-spacing:.04em;
+  color:var(--ink);
+  opacity:0;
+}
+/* Desc → Archivo Regular 16px, line-height 120% */
+.hdesc { text-align:left; opacity:0; }
+.hdesc p {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:clamp(11px,1.1vw,16px);
+  font-weight:400;
+  line-height:1.2;
+  color:var(--ink);
+}
+.hdesc .sub {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:clamp(10px,1vw,16px);
+  font-weight:400;
+  letter-spacing:.01em;
+  color:var(--ink);
+  margin-top:6px;
+}
+
+/* ── SHIVA SPRITE ── */
+#shiva {
+  display:block;
+  width: 154px;
+  height: 154px;
+  background-image: url('Shiva-run.png');
+  background-size: calc(154px * 5) calc(154px * 5);
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: multiply;
+  flex-shrink:0;
+  margin-right: -38px; /* pull right to optically align sprite with 01–08 text below */
+}
+@keyframes shiva-run {
+  0%    { background-position:    0px    0px; }
+  4%    { background-position: -154px    0px; }
+  8%    { background-position: -308px    0px; }
+  12%   { background-position: -462px    0px; }
+  16%   { background-position: -616px    0px; }
+  20%   { background-position:    0px -154px; }
+  24%   { background-position: -154px -154px; }
+  28%   { background-position: -308px -154px; }
+  32%   { background-position: -462px -154px; }
+  36%   { background-position: -616px -154px; }
+  40%   { background-position:    0px -308px; }
+  44%   { background-position: -154px -308px; }
+  48%   { background-position: -308px -308px; }
+  52%   { background-position: -462px -308px; }
+  56%   { background-position: -616px -308px; }
+  60%   { background-position:    0px -462px; }
+  64%   { background-position: -154px -462px; }
+  68%   { background-position: -308px -462px; }
+  72%   { background-position: -462px -462px; }
+  76%   { background-position: -616px -462px; }
+  80%   { background-position:    0px -616px; }
+  84%   { background-position: -154px -616px; }
+  88%   { background-position: -308px -616px; }
+  92%   { background-position: -462px -616px; }
+  96%   { background-position: -616px -616px; }
+  100%  { background-position:    0px    0px; }
+}
+.thumb {
+  position:absolute;
+  overflow:visible; cursor:none;
+  will-change:transform;
+  backface-visibility:hidden;
+  transform-style: preserve-3d;
+  transition:box-shadow .4s cubic-bezier(.16,1,.3,1);
+}
+/* Feature thumb shadow — matches Figma layered drop shadow spec */
+.thumb.is-feature {
+  overflow:visible;  /* shadows must escape the thumb bounds */
+  box-shadow:
+    0 16px  34px rgba(0,0,0,.10),
+    0 62px  62px rgba(0,0,0,.09),
+    0 140px 84px rgba(0,0,0,.05),
+    0 248px 99px rgba(0,0,0,.01);
+}
+/* clip wrapper keeps image bounded while shadow can bleed outside */
+.thumb .thumb-clip {
+  position:absolute; inset:0;
+  overflow:hidden;
+}
+.thumb img {
+  width:100%; height:100%;
+  object-fit:cover; display:block;
+  pointer-events:none;
+  will-change:transform;
+}
+.tinfo {
+  position:absolute; bottom:0; left:0; right:0;
+  padding:16px 12px 11px;
+  background:linear-gradient(transparent, rgba(0,0,0,.5));
+  opacity:0; transition:opacity .3s;
+  pointer-events:none;
+}
+.tinfo span {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px; font-weight:700; letter-spacing:.2em;
+  text-transform:uppercase; color:#fff;
+}
+
+/* ── OVERLAY ── */
+#overlay {
+  position:fixed; inset:0; z-index:800;
+  background:var(--bg);
+  display:none; flex-direction:column;
+}
+#overlay.open { display:flex; }
+
+/* Thin top bar — logo + close only */
+#ovbar {
+  flex-shrink:0;
+  height:72px;
+  padding:0 40px;
+  display:flex; justify-content:space-between; align-items:center;
+  border-bottom:1px solid rgba(14,14,14,.07);
+  background:var(--bg);
+}
+#ovclose {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px; font-weight:700; letter-spacing:.22em;
+  text-transform:uppercase; background:none; border:none;
+  border-bottom:1px solid var(--ink); padding-bottom:2px;
+  color:var(--ink); cursor:none; outline:none; flex-shrink:0;
+  transition: color .2s, border-color .2s;
+}
+#ovclose:hover { color:#ff5c00; border-color:#ff5c00; }
+
+/* Image fills everything below the bar */
+#ovmedia { flex:1; overflow:hidden; position:relative; }
+#ovimg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+
+/* Dark gradient + caption overlaid on image */
+#ovcaption {
+  position:absolute; left:0; right:0; bottom:0;
+  padding:80px 56px 48px;
+  background:linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.3) 55%, transparent 100%);
+  pointer-events:none;
+}
+#ovtitle {
+  font-family:'Space Grotesk', sans-serif;
+  font-size:clamp(24px,3.5vw,52px);
+  font-weight:700; letter-spacing:-.02em; line-height:1;
+  color:#fff;
+}
+#ovmeta {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:clamp(10px,1vw,13px); font-weight:400;
+  letter-spacing:.14em; color:rgba(255,255,255,.6); margin-top:10px;
+}
+
+/* ── WORK PANEL CHECKERBOARD BACKGROUND ── */
+#work-bg-grid {
+  position:absolute; inset:0;
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  grid-template-rows:80px 1fr 1fr;
+  z-index:0; pointer-events:none;
+  background:#0a0a0a;
+  opacity:0; /* stays transparent until strips have landed */
+}
+.wbg-cell { }
+
+/* ── WORK TYPOGRAPHIC ELEMENT ── */
+#work-typo-wrap {
+  position:absolute; bottom:96px; left:40px;
+  pointer-events:none; z-index:2;
+  opacity:0; /* fades in with work content */
+  transition:opacity .4s ease .15s;
+}
+#work-content.visible #work-typo-wrap { opacity:1; }
+#work-typo-wrap svg { width:240px; height:auto; display:block; }
+
+/* ── PAGE INDICATOR TEXT FORMAT ── */
+#wg-cur-page {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px; font-weight:700; letter-spacing:.1em;
+  color:#fff; line-height:1;
+}
+.wg-pi-sep, #wg-tot-page {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px; font-weight:400; letter-spacing:.1em;
+  color:rgba(255,255,255,.35); line-height:1;
+}
+</style>
+</head>
+<body>
+
+<div id="cdot"></div>
+<div id="cring"></div>
+<div id="clabel">CLOSE</div>
+
+<nav>
+    <a href="#" class="nlogo">
+      <svg width="91" height="28" viewBox="0 0 91 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M67.6396 0.123047H73.0713L80.7754 9.01465C80.9914 9.25464 81.2797 9.60262 81.6396 10.0586C81.9996 10.5146 82.3597 10.9829 82.7197 11.4629C83.1037 11.9188 83.392 12.2911 83.584 12.5791L83.7637 12.5068C83.7397 11.8348 83.7275 11.1744 83.7275 10.5264V0.123047H90.9639V24.8906H84.2314L75.5557 14.9902C75.1478 14.5103 74.7997 14.0783 74.5117 13.6943C74.2238 13.2865 73.9475 12.9029 73.6836 12.543L73.5039 12.6143C73.5279 13.0702 73.54 13.5265 73.54 13.9824V24.8906H66.3037V5.74414H43.4561C43.7058 6.61827 43.9141 7.65921 43.9141 8.99121V9.40723C44.4552 9.61534 44.9962 9.8235 45.4541 10.0732C46.8277 8.61637 48.9507 7.86719 51.4482 7.86719C57.1508 7.86722 60.4804 11.1138 63.3525 19.5635L57.8164 21.4365C55.1109 14.6103 54.0702 13.0703 51.7393 13.0703C50.6988 13.0704 49.9913 13.528 49.9912 14.3604C49.9912 15.2761 50.6989 15.6514 51.6562 15.6514C52.4055 15.6514 53.03 15.4847 53.6543 15.1934L55.2773 19.7305C54.1536 20.3963 52.6552 20.7705 50.9072 20.7705C46.4119 20.7705 43.9971 18.2319 43.8721 14.6523C43.331 14.4026 42.7485 14.1942 42.041 14.0693C41.0004 15.2764 39.5018 16.2338 37.7119 16.9414C39.8763 18.8144 42.0408 20.4793 44.6631 22.4355L39.627 27.0977C35.0898 23.3514 31.5927 19.98 29.5947 17.2744C28.346 15.5679 27.7637 14.1941 27.7637 12.7373C27.7637 10.6561 29.2623 9.32422 31.4268 9.32422C32.8834 9.32428 34.1319 9.86509 35.3389 10.8223C36.1714 10.073 36.5469 9.15695 36.5469 7.9082C36.5468 7.11756 36.4219 6.40998 36.2139 5.74414H20.3389L27.3232 24.8906H18.8994L17.8555 21.3984H9.17969L8.13574 24.8906H0L9.03516 0.123047H15.6396V0H67.6396V0.123047ZM13.3916 7.03516C13.2956 7.46703 13.164 7.95897 12.9961 8.51074C12.8521 9.06265 12.6953 9.63839 12.5273 10.2383C12.3594 10.8143 12.1914 11.3666 12.0234 11.8945L10.8359 15.8545H16.2354L15.0479 11.8945C14.9519 11.6065 14.8436 11.2586 14.7236 10.8506C14.6036 10.4426 14.4833 10.0107 14.3633 9.55469C14.2433 9.09873 14.1239 8.65462 14.0039 8.22266C13.884 7.76686 13.7757 7.37106 13.6797 7.03516H13.3916Z" fill="currentColor"/>
+      </svg>
+    </a>
+    <a href="#" class="nwork" id="work-trigger">Work</a>
+</nav>
+
+<!-- Column grid lines — interactive SVG, cursor bends each line -->
+<svg id="col-lines-svg" aria-hidden="true">
+  <path fill="none" stroke="#E0DDDD" stroke-width="1"/>
+  <path fill="none" stroke="#E0DDDD" stroke-width="1"/>
+  <path fill="none" stroke="#E0DDDD" stroke-width="1"/>
+  <path fill="none" stroke="#E0DDDD" stroke-width="1"/>
+</svg>
+
+<div id="stage">
+  <!-- hero-gl: WebGL pixel-displacement canvas — z:1, behind orbit/nav -->
+  <canvas id="hero-gl" style="position:absolute;inset:0;z-index:1;pointer-events:none;width:100%;height:100%;display:block;"></canvas>
+
+  <div id="orbit-group"></div>
+
+  <div class="hname" id="hname-svg">
+    <svg viewBox="0 0 1076 247" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity:0;transition:opacity .6s ease .4s">
+      <path d="M490.943 202V115.727H562.147V133.308H513.422V149.508H555.994V166.712H513.422V184.419H563.026V202H490.943Z" fill="#FD3B34"/>
+      <path d="M438.92 203.507C433.478 203.507 428.371 203.005 423.599 202C418.827 201.079 414.599 199.53 410.915 197.354C407.315 195.177 404.469 192.33 402.376 188.814C400.283 185.214 399.236 180.819 399.236 175.628C399.236 175.293 399.236 174.917 399.236 174.498C399.236 174.079 399.278 173.745 399.362 173.493H421.087C421.087 173.745 421.045 174.079 420.962 174.498C420.962 174.833 420.962 175.126 420.962 175.377C420.962 178.056 421.631 180.233 422.971 181.907C424.394 183.498 426.362 184.67 428.873 185.423C431.385 186.093 434.315 186.428 437.664 186.428C439.506 186.428 441.222 186.344 442.813 186.177C444.403 186.009 445.827 185.716 447.082 185.298C448.338 184.879 449.427 184.377 450.347 183.791C451.352 183.121 452.064 182.368 452.482 181.53C452.985 180.61 453.236 179.563 453.236 178.391C453.236 176.465 452.482 174.875 450.975 173.619C449.552 172.363 447.585 171.317 445.073 170.479C442.645 169.642 439.882 168.847 436.785 168.093C433.687 167.34 430.464 166.545 427.115 165.707C423.766 164.87 420.543 163.824 417.445 162.568C414.348 161.312 411.543 159.721 409.032 157.796C406.604 155.87 404.636 153.484 403.129 150.638C401.706 147.708 400.995 144.191 400.995 140.089C400.995 135.568 401.957 131.675 403.883 128.41C405.808 125.061 408.446 122.34 411.794 120.247C415.227 118.154 419.162 116.647 423.599 115.727C428.036 114.722 432.766 114.22 437.789 114.22C442.729 114.22 447.334 114.722 451.603 115.727C455.957 116.731 459.808 118.322 463.157 120.499C466.505 122.592 469.101 125.271 470.943 128.536C472.868 131.717 473.873 135.568 473.957 140.089V141.596H452.357V140.717C452.357 138.791 451.813 137.117 450.724 135.694C449.72 134.187 448.171 133.015 446.078 132.178C443.985 131.257 441.389 130.796 438.292 130.796C435.194 130.796 432.557 131.089 430.38 131.675C428.287 132.261 426.655 133.098 425.483 134.187C424.394 135.275 423.85 136.573 423.85 138.08C423.85 139.922 424.562 141.429 425.985 142.601C427.492 143.773 429.501 144.777 432.013 145.615C434.524 146.452 437.329 147.247 440.427 148.001C443.524 148.67 446.706 149.424 449.971 150.261C453.32 151.015 456.543 152.019 459.64 153.275C462.738 154.447 465.543 155.996 468.054 157.921C470.566 159.763 472.533 162.066 473.957 164.828C475.463 167.591 476.217 170.94 476.217 174.875C476.217 181.74 474.584 187.265 471.319 191.451C468.138 195.637 463.701 198.693 458.008 200.619C452.399 202.544 446.036 203.507 438.92 203.507Z" fill="#FD3B34"/>
+      <path d="M301.021 202L333.421 115.727H360.42L392.82 202H368.834L363.685 187.056H329.277L324.128 202H301.021ZM334.677 170.228H358.16L352.007 152.019C351.672 151.098 351.253 149.968 350.751 148.628C350.332 147.205 349.872 145.74 349.369 144.233C348.951 142.643 348.532 141.052 348.114 139.461C347.695 137.87 347.276 136.489 346.858 135.317H345.979C345.644 136.908 345.142 138.708 344.472 140.717C343.886 142.726 343.258 144.736 342.588 146.745C342.002 148.754 341.458 150.512 340.956 152.019L334.677 170.228Z" fill="#FD3B34"/>
+      <path d="M194.647 202V115.727H227.423L237.846 154.154C238.265 155.494 238.767 157.335 239.353 159.68C239.939 161.94 240.526 164.326 241.112 166.838C241.698 169.349 242.2 171.61 242.619 173.619H243.623C243.958 172.028 244.377 170.145 244.879 167.968C245.381 165.707 245.925 163.363 246.512 160.935C247.098 158.424 247.642 156.121 248.144 154.028L258.693 115.727H290.59V202H268.739V165.205C268.739 161.605 268.739 157.963 268.739 154.28C268.823 150.596 268.907 147.247 268.99 144.233C269.074 141.219 269.116 139.043 269.116 137.703H268.111C267.86 138.959 267.442 140.801 266.855 143.229C266.353 145.573 265.767 148.042 265.097 150.638C264.511 153.149 263.967 155.326 263.465 157.168L250.907 202H232.823L220.14 157.168C219.721 155.494 219.219 153.484 218.633 151.14C218.047 148.796 217.461 146.41 216.875 143.982C216.372 141.554 215.912 139.503 215.493 137.829H214.489C214.572 140.005 214.656 142.684 214.74 145.866C214.823 148.963 214.907 152.228 214.991 155.661C215.075 159.01 215.117 162.191 215.117 165.205V202H194.647Z" fill="#FD3B34"/>
+      <path d="M134.423 203.507C124.962 203.507 116.841 201.874 110.06 198.609C103.362 195.261 98.2136 190.279 94.6137 183.665C91.0137 177.051 89.2137 168.763 89.2137 158.8C89.2137 148.838 91.0137 140.591 94.6137 134.061C98.2136 127.447 103.362 122.508 110.06 119.243C116.841 115.894 124.962 114.22 134.423 114.22C143.883 114.22 151.962 115.894 158.659 119.243C165.441 122.508 170.631 127.447 174.231 134.061C177.831 140.591 179.631 148.838 179.631 158.8C179.631 168.763 177.831 177.051 174.231 183.665C170.631 190.279 165.441 195.261 158.659 198.609C151.962 201.874 143.883 203.507 134.423 203.507ZM134.423 185.926C138.022 185.926 141.204 185.382 143.967 184.293C146.729 183.205 149.032 181.614 150.873 179.521C152.799 177.428 154.222 174.875 155.143 171.861C156.064 168.847 156.525 165.456 156.525 161.689V156.163C156.525 152.312 156.064 148.88 155.143 145.866C154.222 142.852 152.799 140.298 150.873 138.205C149.032 136.112 146.729 134.522 143.967 133.433C141.204 132.345 138.022 131.801 134.423 131.801C130.739 131.801 127.516 132.345 124.753 133.433C121.99 134.522 119.688 136.112 117.846 138.205C116.004 140.298 114.623 142.852 113.702 145.866C112.781 148.88 112.32 152.312 112.32 156.163V161.689C112.32 165.456 112.781 168.847 113.702 171.861C114.623 174.875 116.004 177.428 117.846 179.521C119.688 181.614 121.99 183.205 124.753 184.293C127.516 185.382 130.739 185.926 134.423 185.926Z" fill="#FD3B34"/>
+      <path d="M41.2088 203.507C35.767 203.507 30.6601 203.005 25.888 202C21.116 201.079 16.8881 199.53 13.2045 197.354C9.60449 195.177 6.75801 192.33 4.66501 188.814C2.57201 185.214 1.52551 180.819 1.52551 175.628C1.52551 175.293 1.52551 174.917 1.52551 174.498C1.52551 174.079 1.56737 173.745 1.65109 173.493H23.3764C23.3764 173.745 23.3346 174.079 23.2509 174.498C23.2509 174.833 23.2509 175.126 23.2509 175.377C23.2509 178.056 23.9206 180.233 25.2601 181.907C26.6834 183.498 28.6508 184.67 31.1624 185.423C33.674 186.093 36.6042 186.428 39.953 186.428C41.7948 186.428 43.5111 186.344 45.1018 186.177C46.6925 186.009 48.1157 185.716 49.3715 185.298C50.6273 184.879 51.7157 184.377 52.6366 183.791C53.6412 183.121 54.3528 182.368 54.7714 181.53C55.2738 180.61 55.5249 179.563 55.5249 178.391C55.5249 176.465 54.7714 174.875 53.2645 173.619C51.8412 172.363 49.8738 171.317 47.3622 170.479C44.9343 169.642 42.1716 168.847 39.0739 168.093C35.9763 167.34 32.7531 166.545 29.4043 165.707C26.0555 164.87 22.8323 163.824 19.7346 162.568C16.637 161.312 13.8324 159.721 11.3208 157.796C8.89287 155.87 6.92545 153.484 5.41849 150.638C3.99525 147.708 3.28363 144.191 3.28363 140.089C3.28363 135.568 4.24641 131.675 6.17197 128.41C8.09753 125.061 10.7347 122.34 14.0835 120.247C17.516 118.154 21.4509 116.647 25.888 115.727C30.3252 114.722 35.0554 114.22 40.0786 114.22C45.0181 114.22 49.6227 114.722 53.8924 115.727C58.2458 116.731 62.0969 118.322 65.4457 120.499C68.7945 122.592 71.3899 125.271 73.2317 128.536C75.1573 131.717 76.1619 135.568 76.2456 140.089V141.596H54.6459V140.717C54.6459 138.791 54.1017 137.117 53.0133 135.694C52.0087 134.187 50.4599 133.015 48.3669 132.178C46.2739 131.257 43.6785 130.796 40.5809 130.796C37.4833 130.796 34.8461 131.089 32.6694 131.675C30.5764 132.261 28.9438 133.098 27.7717 134.187C26.6834 135.275 26.1392 136.573 26.1392 138.08C26.1392 139.922 26.8508 141.429 28.2741 142.601C29.781 143.773 31.7903 144.777 34.3019 145.615C36.8135 146.452 39.6181 147.247 42.7158 148.001C45.8134 148.67 48.9948 149.424 52.2598 150.261C55.6086 151.015 58.8319 152.019 61.9295 153.275C65.0271 154.447 67.8318 155.996 70.3434 157.921C72.855 159.763 74.8224 162.066 76.2456 164.828C77.7526 167.591 78.5061 170.94 78.5061 174.875C78.5061 181.74 76.8735 187.265 73.6084 191.451C70.4271 195.637 65.9899 198.693 60.297 200.619C54.6877 202.544 48.325 203.507 41.2088 203.507Z" fill="#FD3B34"/>
+      <path d="M693.539 133.586V203H668.154V198.697C660.697 201.566 652.235 203.143 641.335 203.143C615.664 203.143 596.446 192.387 585.833 179.623C579.666 172.309 576.511 164.564 576.511 157.824C576.511 150.223 581.817 145.92 588.988 145.92C592.574 145.92 595.729 146.924 599.027 148.932C600.031 146.494 600.462 143.912 600.462 141.044C600.462 138.462 600.175 135.881 599.601 133.586H572.639V113.795H705.729V133.586H693.539ZM658.689 161.696C662.561 161.696 665.86 160.979 668.154 158.684V133.586H624.269C625.273 136.598 625.846 140.04 625.846 144.056C625.846 156.246 619.106 165.281 605.481 170.875C612.939 178.763 626.133 183.639 643.2 183.639C652.235 183.639 659.98 182.778 668.154 180.053V176.324C664.712 177.615 660.697 178.332 655.247 178.332C639.901 178.332 628.571 170.444 628.571 157.107C628.571 143.482 637.75 136.741 653.956 136.741C657.828 136.741 661.414 137.172 664.282 137.602L662.991 153.808C661.701 153.665 660.266 153.521 658.259 153.521C653.096 153.521 651.088 154.955 651.088 157.537C651.088 160.262 653.956 161.696 658.689 161.696Z" fill="#FD3B34"/>
+      <path d="M618.623 0.443359H638.269L666.13 32.6016C666.911 33.4695 667.953 34.7288 669.255 36.3779C670.557 38.0269 671.858 39.7193 673.16 41.4551C674.549 43.1041 675.591 44.4497 676.285 45.4912L676.937 45.2314C676.85 42.8011 676.806 40.4138 676.806 38.0703V0.443359H702.976V90.0186H678.629L647.252 54.2148C645.776 52.4789 644.517 50.9161 643.476 49.5273C642.434 48.0519 641.436 46.6632 640.481 45.3613L639.83 45.6221C639.917 47.2711 639.961 48.9203 639.961 50.5693V90.0186H613.791V20.7734H531.162C532.065 23.9347 532.818 27.6985 532.818 32.5156V34.0215C534.775 34.7741 536.732 35.5266 538.388 36.4297C543.355 31.1609 551.033 28.4512 560.065 28.4512C580.689 28.4512 592.733 40.1935 603.12 70.7529L583.099 77.5273C573.314 52.839 569.549 47.2686 561.119 47.2686C557.356 47.2687 554.797 48.9249 554.797 51.9355C554.797 55.2473 557.356 56.6025 560.818 56.6025C563.528 56.6025 565.786 56 568.044 54.9463L573.915 71.3545C569.85 73.7631 564.431 75.1182 558.108 75.1182C541.85 75.118 533.12 65.9355 532.668 52.9893C530.711 52.086 528.603 51.3335 526.044 50.8818C522.28 55.2474 516.861 58.7094 510.388 61.2686C518.216 68.0428 526.044 74.0643 535.528 81.1396L517.312 98C500.904 84.4518 488.259 72.2585 481.033 62.4736C476.517 56.3015 474.409 51.3333 474.409 46.0645C474.409 38.5376 479.828 33.7208 487.656 33.7207C492.925 33.7207 497.442 35.6773 501.808 39.1396C504.818 36.43 506.173 33.1176 506.173 28.6016C506.173 25.7415 505.721 23.182 504.969 20.7734H447.556L472.818 90.0186H442.353L438.577 77.3896H407.199L403.424 90.0186H374L406.679 0.443359H430.562V0H618.623V0.443359ZM422.433 25.4414C422.085 27.0037 421.608 28.783 421 30.7793C420.479 32.7755 419.915 34.8585 419.308 37.0283C418.7 39.1114 418.093 41.1081 417.485 43.0176L413.188 57.3389H432.718L428.422 43.0176C428.075 41.9761 427.684 40.7176 427.25 39.2422C426.816 37.7666 426.382 36.2038 425.948 34.5547C425.514 32.9056 425.079 31.2996 424.646 29.7373C424.212 28.0884 423.821 26.6564 423.474 25.4414H422.433Z" fill="#FD3B34"/>
+      <path d="M805.587 114.562H886.78V142.978C886.695 149.012 885.351 153.979 882.726 158.385C880.286 162.534 876.901 165.846 872.596 168.318L890.275 203.164H862.524L848.209 172.774H830.395V203.164H805.587V114.562ZM830.395 153.743H852.463C855.283 153.743 857.424 152.841 859.014 151.106C860.703 149.27 861.596 146.81 861.596 143.605C861.596 141.345 861.178 139.42 860.34 137.829C859.503 136.238 858.33 135.024 856.824 134.187C855.317 133.266 853.474 132.806 851.298 132.806H830.395V153.743Z" fill="#FD3B34"/>
+      <path d="M764.85 114.562L798.123 203.164H771.626L766.478 188.221H733.729L728.58 203.164H702.962L736.236 114.562H764.85ZM750.48 135.317H749.601C749.266 136.908 748.763 138.708 748.094 140.717C747.508 142.726 746.88 144.736 746.21 146.745C745.355 149.618 744.955 150.889 744.578 152.02L738.299 170.229H761.782L755.629 152.02C755.294 151.099 754.875 149.968 754.373 148.629C753.954 147.206 753.494 145.74 752.991 144.233C752.573 142.643 752.154 141.052 751.735 139.461C751.317 137.871 750.899 136.489 750.48 135.317Z" fill="#FD3B34"/>
+      <path d="M952.729 114.562L986.003 203.164H959.506L954.356 188.221H921.608L916.46 203.164H890.842L924.116 114.562H952.729ZM938.359 135.317H937.48C937.146 136.908 936.643 138.708 935.974 140.717C935.308 142.726 934.592 144.736 933.658 148.205L933.658 148.205L932.457 152.02L926.178 170.229H949.662L943.508 152.02C943.173 151.099 942.755 149.968 942.253 148.629C941.834 147.206 941.373 145.74 940.871 144.233C940.452 142.643 940.034 141.052 939.615 139.461C939.197 137.87 938.778 136.489 938.359 135.317Z" fill="#FD3B34"/>
+      <path d="M1053.78 115.727V165.456L1045.99 155.786L1014.6 115.727H994.631V202H1015.48V152.271L1021.5 159.805L1054.78 202H1074.63V115.727H1053.78Z" fill="#FD3B34"/>
+    </svg>
+    <!-- hidden spans keep entrance JS from erroring -->
+    <span class="lw"><span class="li" id="l1a"></span></span>
+    <span class="lw"><span class="li" id="l2a"></span></span>
+  </div>
+
+  <div class="hname-inv">
+    <span class="lw"><span class="li" id="l1b"></span></span>
+    <span class="lw"><span class="li" id="l2b"></span></span>
+  </div>
+
+</div>
+
+<div class="hbot">
+  <div class="hbot-left">
+    <div class="hdesc">
+      <p>I design products that feel obvious —<br>after I've done the hard thinking.</p>
+      <p class="sub">UI/UX designer. 19 years in. Still curious.</p>
+    </div>
+    <button id="about-trigger">About Me</button>
+  </div>
+  <div class="hbot-right">
+    <div id="shiva"></div>
+    <span class="hidx" id="idxLabel">01–08</span>
+  </div>
+</div>
+
+<div id="overlay">
+  <div id="ovbar">
+    <a href="#" class="nlogo" onclick="closeProject();return false;">
+      <svg width="91" height="28" viewBox="0 0 91 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M67.6396 0.123047H73.0713L80.7754 9.01465C80.9914 9.25464 81.2797 9.60262 81.6396 10.0586C81.9996 10.5146 82.3597 10.9829 82.7197 11.4629C83.1037 11.9188 83.392 12.2911 83.584 12.5791L83.7637 12.5068C83.7397 11.8348 83.7275 11.1744 83.7275 10.5264V0.123047H90.9639V24.8906H84.2314L75.5557 14.9902C75.1478 14.5103 74.7997 14.0783 74.5117 13.6943C74.2238 13.2865 73.9475 12.9029 73.6836 12.543L73.5039 12.6143C73.5279 13.0702 73.54 13.5265 73.54 13.9824V24.8906H66.3037V5.74414H43.4561C43.7058 6.61827 43.9141 7.65921 43.9141 8.99121V9.40723C44.4552 9.61534 44.9962 9.8235 45.4541 10.0732C46.8277 8.61637 48.9507 7.86719 51.4482 7.86719C57.1508 7.86722 60.4804 11.1138 63.3525 19.5635L57.8164 21.4365C55.1109 14.6103 54.0702 13.0703 51.7393 13.0703C50.6988 13.0704 49.9913 13.528 49.9912 14.3604C49.9912 15.2761 50.6989 15.6514 51.6562 15.6514C52.4055 15.6514 53.03 15.4847 53.6543 15.1934L55.2773 19.7305C54.1536 20.3963 52.6552 20.7705 50.9072 20.7705C46.4119 20.7705 43.9971 18.2319 43.8721 14.6523C43.331 14.4026 42.7485 14.1942 42.041 14.0693C41.0004 15.2764 39.5018 16.2338 37.7119 16.9414C39.8763 18.8144 42.0408 20.4793 44.6631 22.4355L39.627 27.0977C35.0898 23.3514 31.5927 19.98 29.5947 17.2744C28.346 15.5679 27.7637 14.1941 27.7637 12.7373C27.7637 10.6561 29.2623 9.32422 31.4268 9.32422C32.8834 9.32428 34.1319 9.86509 35.3389 10.8223C36.1714 10.073 36.5469 9.15695 36.5469 7.9082C36.5468 7.11756 36.4219 6.40998 36.2139 5.74414H20.3389L27.3232 24.8906H18.8994L17.8555 21.3984H9.17969L8.13574 24.8906H0L9.03516 0.123047H15.6396V0H67.6396V0.123047ZM13.3916 7.03516C13.2956 7.46703 13.164 7.95897 12.9961 8.51074C12.8521 9.06265 12.6953 9.63839 12.5273 10.2383C12.3594 10.8143 12.1914 11.3666 12.0234 11.8945L10.8359 15.8545H16.2354L15.0479 11.8945C14.9519 11.6065 14.8436 11.2586 14.7236 10.8506C14.6036 10.4426 14.4833 10.0107 14.3633 9.55469C14.2433 9.09873 14.1239 8.65462 14.0039 8.22266C13.884 7.76686 13.7757 7.37106 13.6797 7.03516H13.3916Z" fill="currentColor"/>
+      </svg>
+    </a>
+    <button id="ovclose">CLOSE &nbsp;✕</button>
+  </div>
+  <div id="ovmedia">
+    <img id="ovimg" src="" alt="">
+    <div id="ovcaption">
+      <div id="ovtitle"></div>
+      <div id="ovmeta"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Fragment containers — panels loaded on demand -->
+<div id="about-panel-container"></div>
+<div id="work-panel-container"></div>
+
+<script>
+/* ══════════════════════════════════════════════
+   SETUP
+   Reference: 1440 × 900
+   Small thumb:   254 × 159
+   Feature thumb: 564 × 353  (FSCALE = 2.220×)
+══════════════════════════════════════════════ */
+const VW = window.innerWidth;
+const VH = window.innerHeight;
+const S  = Math.min(VW / 1440, VH / 900);
+
+const TW = Math.round(254 * S);
+const TH = Math.round(159 * S);
+const FSCALE = 564 / 254; // ≈ 2.220
+
+/* ── PROJECTS ── */
+const PROJECTS = [
+  { title:"Fintech Dashboard",    meta:"UI/UX · Product Design · 2024",      img:"https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1400&q=88" },
+  { title:"Mobile Banking",       meta:"iOS · Android · 2023",                img:"https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=1400&q=88" },
+  { title:"Healthcare Platform",  meta:"UX Research · Design System · 2023",  img:"https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1400&q=88" },
+  { title:"E-Commerce Redesign",  meta:"Strategy · UX · UI · 2022",           img:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=88" },
+  { title:"SaaS Analytics",       meta:"Data Visualisation · UX · 2022",      img:"https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1400&q=88" },
+  { title:"Design System",        meta:"Components · Tokens · Docs · 2021",   img:"https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=1400&q=88" },
+  { title:"Travel App",           meta:"Mobile UX · Branding · 2021",         img:"https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1400&q=88" },
+  { title:"Brand Identity",       meta:"Visual Identity · UX Writing · 2020", img:"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1400&q=88" },
+];
+const N = PROJECTS.length;
+
+/* ── ELLIPSE ──
+   Tighter oval as requested.
+   CX slightly right of name text, CY centred.
+   RX reduced so thumbs don't reach edges.
+   RY smaller → more oval (flatter vertically).
+── */
+const CX = VW * 0.50;   // centre x
+const CY = VH * 0.50;   // centre y
+const RX = VW * 0.30;   // horizontal radius — tighter than before
+const RY = VH * 0.28;   // vertical radius   — flatter oval
+
+const FEATURE_ANGLE = 0; // rightmost = feature zone
+const STEP = (Math.PI * 2) / N;
+
+/* ── BUILD DOM ── */
+const orbitGroup = document.getElementById('orbit-group');
+
+const thumbs = PROJECTS.map((p, i) => {
+  const homeAngle = FEATURE_ANGLE + (i / N) * Math.PI * 2;
+  const el = document.createElement('div');
+  el.className = 'thumb';
+  el.style.cssText = `width:${TW}px; height:${TH}px; opacity:0; position:absolute;`;
+  el.innerHTML = `
+    <div class="thumb-clip">
+      <img src="${p.img}" alt="${p.title}" loading="${i < 3 ? 'eager' : 'lazy'}">
+    </div>
+    <div class="tinfo"><span>${p.title}</span></div>
+  `;
+  el.addEventListener('click', () => openProject(i));
+  orbitGroup.appendChild(el);
+  const imgEl  = el.querySelector('img');
+  const infoEl = el.querySelector('.tinfo');
+  return { ...p, el, imgEl, infoEl, homeAngle, hx:0, hy:0, thx:0, thy:0,
+    tiltX:0, tiltY:0, tTiltX:0, tTiltY:0,
+    entranceScale:0.94, entranceY:18   // spring entrance starting state
+  };
+});
+
+/* ── PLACE ── */
+function ellipsePos(angle) {
+  return {
+    ex: CX + RX * Math.cos(angle),
+    ey: CY + RY * Math.sin(angle),
+  };
+}
+
+// Declared early — used inside placeThumb which runs before the entrance block
+let entranceDone = false;
+
+function placeThumb(t, angle, scale, hx, hy, tiltX, tiltY) {
+  const { ex, ey } = ellipsePos(angle);
+  const es = entranceDone ? 1 : (t.entranceScale || 1);
+  const ey2 = entranceDone ? 0 : (t.entranceY || 0);
+  const finalScale = scale * es;
+  const w = TW * finalScale, h = TH * finalScale;
+  const x = ex - w/2 + hx;
+  const y = ey - h/2 + hy + ey2;
+  const rx = (tiltX || 0).toFixed(3);
+  const ry = (tiltY || 0).toFixed(3);
+  t.el.style.transform = `perspective(800px) translate(${x}px,${y}px) scale(${finalScale}) rotateX(${rx}deg) rotateY(${ry}deg)`;
+  t.el.style.transformOrigin = 'top left';
+  // Feature thumb ALWAYS on top — z=30 vs z=10 for all others
+  const isFeature = finalScale > 1.5;
+  t.el.style.zIndex = isFeature ? '30' : '10';
+  // Toggle shadow class
+  t.el.classList.toggle('is-feature', isFeature);
+}
+
+thumbs.forEach(t => placeThumb(t, t.homeAngle, 1, 0, 0, 0, 0));
+
+/* ── LABEL ── */
+const idxLabel = document.getElementById('idxLabel');
+let currentFeature = 0;
+function updateLabel(idx) {
+  if (idx === currentFeature) return;
+  currentFeature = idx;
+  idxLabel.textContent = `${String(idx+1).padStart(2,'0')}–${String(N).padStart(2,'0')}`;
+}
+
+/* ── THUMB SPRING ENTRANCE SYSTEM ──
+   Each thumbnail has its own spring state (position + velocity).
+   Target goes from off-screen below → final position.
+   Remotion spring(mass:1, damping:200, stiffness:100) translated to RAF.
+── */
+const thumbSprings = thumbs.map((t, i) => ({
+  val: 0, vel: 0, active: false, done: false,
+  delay: 0.5 + Math.pow(i, 0.55) * 0.13,  // wider power-curve — each thumb has its own moment
+}));
+
+const SPRING_STIFF = 0.055;   // softer — slower, more graceful rise
+const SPRING_DAMP  = 0.82;    // higher damping — barely any overshoot
+const SPRING_THRESH = 0.0008;
+
+let entranceT = 0; // seconds since load
+const entranceFPS = 60;
+
+function tickEntranceSprings(dt) {
+  if (entranceDone) return;
+  entranceT += dt;
+  let allDone = true;
+
+  thumbSprings.forEach((sp, i) => {
+    if (sp.done) return;
+    if (!sp.active && entranceT >= sp.delay) sp.active = true;
+    if (!sp.active) { allDone = false; return; }
+
+    // Spring toward 1
+    sp.vel += (1 - sp.val) * SPRING_STIFF;
+    sp.vel *= SPRING_DAMP;
+    sp.val += sp.vel;
+
+    if (Math.abs(1 - sp.val) < SPRING_THRESH && Math.abs(sp.vel) < SPRING_THRESH) {
+      sp.val = 1; sp.vel = 0; sp.done = true;
+    } else {
+      allDone = false;
+    }
+
+    // Apply: very subtle scale + gentle lift — premium float not a pop
+    const scaleVal = 0.94 + sp.val * 0.06;       // 0.94 → 1.0 — almost imperceptible scale
+    const yOffset  = (1 - sp.val) * 18;           // 18px → 0  — delicate upward drift
+    const opVal    = Math.min(1, sp.val * 1.15);  // opacity leads slightly, not aggressively
+
+    const t = thumbs[i];
+    t.el.style.opacity = opVal.toFixed(3);
+    t.entranceScale = scaleVal;
+    t.entranceY     = yOffset;
+  });
+
+  if (allDone) entranceDone = true;
+}
+
+/* ── ENTRANCE ── */
+let lastEntranceTime = null;
+function entranceRaf(ts) {
+  if (!entranceDone) {
+    const dt = lastEntranceTime ? (ts - lastEntranceTime) / 1000 : 0;
+    lastEntranceTime = ts;
+    tickEntranceSprings(dt);
+    requestAnimationFrame(entranceRaf);
+  }
+}
+
+window.addEventListener('load', () => {
+  // Init thumb entrance state
+  thumbs.forEach(t => { t.entranceScale = 0.94; t.entranceY = 18; });
+
+  // SVG headline — fade + subtle scale up (elastic feel)
+  const svgHeadline = document.querySelector('#hname-svg svg');
+  if (svgHeadline) {
+    gsap.fromTo(svgHeadline,
+      { opacity:0, scale:0.96, y:12 },
+      { opacity:1, scale:1,    y:0, duration:1.1, ease:'expo.out', delay:0.25 }
+    );
+  }
+
+  gsap.to('.hidx',  { opacity:1, y:0, duration:0.7, ease:'power3.out', delay:1.05 });
+  gsap.to('.hdesc', { opacity:1, y:0, duration:0.7, ease:'power3.out', delay:1.15 });
+  gsap.to(document.getElementById('shiva'), { opacity:1, duration:0.5, delay:1.3 });
+
+  // Kick off spring entrance RAF
+  requestAnimationFrame(entranceRaf);
+});
+
+/* ── SCROLL → ORBIT ── */
+let orbitAngle  = 0;
+let targetAngle = 0;
+let isScrolling = false;
+let settleTimer;
+let scrollVel   = 0;   // raw scroll speed per frame
+let squishScale = 1;   // current squish multiplier (< 1 = squished)
+
+const shivaEl = document.getElementById('shiva');
+let shivaRunning = false;
+let shivaStopTimer;
+
+function shivaStart() {
+  if (shivaRunning) return;
+  shivaRunning = true;
+  shivaEl.style.animation = 'shiva-run 1.1s steps(1) infinite';
+}
+
+function shivaStop() {
+  if (!shivaRunning) return;
+  // Let Shiva finish the current cycle gracefully then stop
+  // 1.1s cycle — stop after one more loop
+  clearTimeout(shivaStopTimer);
+  shivaStopTimer = setTimeout(() => {
+    shivaRunning = false;
+    // Snap to first frame
+    shivaEl.style.animation = 'none';
+    shivaEl.style.backgroundPosition = '0 0';
+  }, 1100); // complete one last cycle
+}
+
+function nudge(delta) {
+  targetAngle += delta;
+  isScrolling = true;
+  // Track raw velocity for squish effect
+  scrollVel = Math.abs(delta);
+  shivaStart();
+  clearTimeout(settleTimer);
+  settleTimer = setTimeout(settle, 170);
+}
+function settle() {
+  isScrolling = false;
+  targetAngle = Math.round(targetAngle / STEP) * STEP;
+  shivaStop();
+}
+
+window.addEventListener('wheel',      e => nudge(e.deltaY * 0.0024), { passive:true });
+let lastTY = null;
+window.addEventListener('touchstart', e => { lastTY = e.touches[0].clientY; }, {passive:true});
+window.addEventListener('touchmove',  e => {
+  if (lastTY !== null) { nudge((lastTY - e.touches[0].clientY) * 0.005); lastTY = e.touches[0].clientY; }
+}, {passive:true});
+window.addEventListener('touchend', () => { lastTY = null; settle(); });
+
+/* ── CURSOR ── */
+let mx=VW/2, my=VH/2;
+// Spring cursor: position + velocity for organic overshoot
+let crx=VW/2, cry=VH/2, cvx=0, cvy=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
+const cdot   = document.getElementById('cdot');
+const cring  = document.getElementById('cring');
+const clabel = document.getElementById('clabel');
+
+function updateCursor() {
+  const stiff  = 0.10;
+  const damp   = 0.76;
+  cvx += (mx - crx) * stiff;
+  cvy += (my - cry) * stiff;
+  cvx *= damp;
+  cvy *= damp;
+  crx += cvx;
+  cry += cvy;
+  // translate3d keeps cursor on compositor thread — no layout triggered
+  cdot.style.transform  = `translate3d(calc(${mx}px - 50%), calc(${my}px - 50%), 0)`;
+  cring.style.transform = `translate3d(calc(${crx}px - 50%), calc(${cry}px - 50%), 0)`;
+  clabel.style.transform = `translate3d(${mx + 22}px, ${my + 22}px, 0)`;
+}
+thumbs.forEach(t => {
+  t.el.addEventListener('mouseenter', () => {
+    document.body.classList.add('chov');
+    document.body.classList.add('thumb-hov');
+    t.el.classList.add('is-hovered');
+  });
+  t.el.addEventListener('mouseleave', () => {
+    document.body.classList.remove('chov');
+    document.body.classList.remove('thumb-hov');
+    t.el.classList.remove('is-hovered');
+  });
+});
+document.querySelectorAll('.nwork, #ovclose, #about-trigger').forEach(el => {
+  el.addEventListener('mouseenter', () => document.body.classList.add('chov'));
+  el.addEventListener('mouseleave', () => document.body.classList.remove('chov'));
+});
+
+function lerp(a, b, t) { return a + (b-a)*t; }
+
+/* ── GROUP EDGE DRIFT — spring physics ── */
+let gTX=0, gTY=0, gCX=0, gCY=0, gVX=0, gVY=0;
+const EDGE_Z    = 0.18;
+const MAX_DRIFT = Math.round(20 * S);
+
+function edgeDrift() {
+  const nx=mx/VW, ny=my/VH;
+  let fx=0, fy=0;
+  if (nx < EDGE_Z)         fx = -(1-nx/EDGE_Z);
+  else if (nx > 1-EDGE_Z)  fx = (nx-(1-EDGE_Z))/EDGE_Z;
+  if (ny < EDGE_Z)         fy = -(1-ny/EDGE_Z);
+  else if (ny > 1-EDGE_Z)  fy = (ny-(1-EDGE_Z))/EDGE_Z;
+  const ss = v => Math.sign(v)*Math.pow(Math.abs(v),2);
+  gTX = ss(fx)*MAX_DRIFT;
+  gTY = ss(fy)*MAX_DRIFT;
+}
+
+function applyGroupDrift() {
+  // Spring: stiffness=0.04, damping=0.85 — heavy, slow, organic
+  gVX += (gTX - gCX) * 0.04;
+  gVY += (gTY - gCY) * 0.04;
+  gVX *= 0.85;
+  gVY *= 0.85;
+  gCX += gVX;
+  gCY += gVY;
+}
+
+/* ── RENDER LOOP ── */
+let overlayOpen = false;
+const featureX = CX + RX; // rightmost ellipse point
+const featureY = CY;
+
+function loop() {
+  requestAnimationFrame(loop);
+
+  // Cursor — spring physics (overshoot + settle)
+  updateCursor();
+
+  // Group edge drift — spring physics
+  if (!overlayOpen) edgeDrift(); else { gTX=0; gTY=0; }
+  applyGroupDrift();
+  orbitGroup.style.transform = `translate(${gCX}px,${gCY}px)`;
+
+  // Orbit — faster attack when scrolling, very slow spring settle
+  // Remotion spring principle: mass=1, damping=200 → fast settle, slight ease
+  const orbitEase = isScrolling ? 0.12 : 0.038;
+  orbitAngle = lerp(orbitAngle, targetAngle, orbitEase);
+
+  // ── SQUISH ON FAST SCROLL ──
+  // Map scrollVel → target squish. Fast scroll = squish to ~0.88.
+  const velClamped   = Math.min(scrollVel * 60, 1);
+  const squishTarget = isScrolling ? 1 - velClamped * 0.13 : 1;
+  scrollVel = lerp(scrollVel, 0, 0.18);
+  // Asymmetric: compress fast (power3), expand slow with spring overshoot
+  const squishEase = squishScale > squishTarget
+    ? 0.28                          // compressing — fast
+    : isScrolling ? 0.055 : 0.038; // expanding — slow spring feel
+  squishScale = lerp(squishScale, squishTarget, squishEase);
+
+  // Feature zone threshold
+  const maxDist = Math.hypot(RX*2, RY*2);
+  const threshold = maxDist * 0.38;
+
+  let closestIdx=0, minDist=Infinity;
+
+  thumbs.forEach((t, i) => {
+    const angle = t.homeAngle + orbitAngle;
+    const { ex, ey } = ellipsePos(angle);
+
+    const dToFeature = Math.hypot(ex - featureX, ey - featureY);
+    if (dToFeature < minDist) { minDist=dToFeature; closestIdx=i; }
+
+    const prox = Math.max(0, 1 - dToFeature / threshold);
+    const eased = prox*prox*(3-2*prox);
+    const scale = 1 + eased*(FSCALE-1);
+
+    // Repulsion
+    const tcx=ex+gCX, tcy=ey+gCY;
+    const dx=tcx-mx, dy=tcy-my;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    const REPEL = Math.round(155*S);
+
+    if (dist < REPEL && !overlayOpen) {
+      const str=(1-dist/REPEL)*18;
+      t.thx=(dx/dist)*str; t.thy=(dy/dist)*str;
+      t.infoEl.style.opacity='1';
+    } else {
+      t.thx=0; t.thy=0;
+      t.infoEl.style.opacity='0';
+    }
+    t.hx = lerp(t.hx, t.thx, .09);
+    t.hy = lerp(t.hy, t.thy, .09);
+
+    // 3D tilt — base tilt from ellipse position (subtle world angle)
+    // Each thumb gets a gentle tilt depending on where it sits on the orbit.
+    // Rightmost tilts slightly left-back, leftmost tilts right-back, etc.
+    const BASE_TILT = 5; // degrees max base tilt
+    const baseTiltY =  Math.cos(angle) * BASE_TILT * -1; // lean inward
+    const baseTiltX =  Math.sin(angle) * BASE_TILT * 0.5;
+
+    // Cursor-driven extra tilt — when cursor is near, thumb reacts like a card
+    let cursorTiltX = 0, cursorTiltY = 0;
+    const TILT_RADIUS = Math.round(200 * S);
+    if (dist < TILT_RADIUS && !overlayOpen) {
+      const relX = (mx - tcx) / TILT_RADIUS; // -1..1
+      const relY = (my - tcy) / TILT_RADIUS;
+      const falloff = 1 - dist / TILT_RADIUS;
+      cursorTiltX = relY * -6 * falloff;  // tilt toward cursor vertically
+      cursorTiltY = relX *  6 * falloff;  // tilt toward cursor horizontally
+    }
+
+    t.tTiltX = baseTiltX + cursorTiltX;
+    t.tTiltY = baseTiltY + cursorTiltY;
+    // Spring tilt: fast attack (0.10), slow release (0.04) — asymmetric like Remotion spring
+    const tiltEase = (Math.abs(t.tTiltX - t.tiltX) + Math.abs(t.tTiltY - t.tiltY)) > 1 ? 0.10 : 0.04;
+    t.tiltX  = lerp(t.tiltX, t.tTiltX, tiltEase);
+    t.tiltY  = lerp(t.tiltY, t.tTiltY, tiltEase);
+
+    // Parallax
+    if (dist < REPEL+50) {
+      t.imgEl.style.transform = `scale(1.07) translate(${-((mx-tcx)/REPEL)*6}px,${-((my-tcy)/REPEL)*6}px)`;
+    } else {
+      t.imgEl.style.transform = '';
+    }
+
+    placeThumb(t, angle, scale * squishScale, t.hx, t.hy, t.tiltX, t.tiltY);
+  });
+
+  updateLabel(closestIdx);
+}
+loop();
+
+/* ── OPEN / CLOSE ── */
+const overlay = document.getElementById('overlay');
+const ovimg   = document.getElementById('ovimg');
+const ovtitle   = document.getElementById('ovtitle');
+const ovmeta    = document.getElementById('ovmeta');
+const ovcaption = document.getElementById('ovcaption');
+const ovclose = document.getElementById('ovclose');
+let savedRect = null;
+let overlayFromWork = false;
+
+function openProject(i, sourceRect) {
+  const p=PROJECTS[i];
+  const rect= sourceRect || thumbs[i].el.getBoundingClientRect();
+  savedRect=rect; overlayOpen=true;
+  overlayFromWork = !!(document.getElementById('work-panel')?.classList.contains('open'));
+  document.body.classList.add('overlay-open');
+  ovimg.src=p.img; ovtitle.textContent=p.title; ovmeta.textContent=p.meta;
+  ovimg.style.transform='scale(1.08)';
+  overlay.style.display='flex';
+  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  // Clip expand: expo.inOut = fast start, spring-like settle at full screen
+  gsap.fromTo(overlay,
+    { clipPath:`inset(${(cy/VH*100).toFixed(3)}% ${((VW-cx)/VW*100).toFixed(3)}% ${((VH-cy)/VH*100).toFixed(3)}% ${(cx/VW*100).toFixed(3)}%)` },
+    { clipPath:`inset(0% 0% 0% 0%)`, duration:.82, ease:'expo.inOut' }
+  );
+  // Image: spring scale — back.out gives natural deceleration overshoot
+  gsap.to(ovimg, { scale:1, duration:1.3, ease:'back.out(1.2)', delay:.04 });
+  // Caption block slides up from bottom of image
+  gsap.fromTo(ovcaption, { y:28, opacity:0 }, { y:0, opacity:1, duration:0.75, ease:'expo.out', delay:0.5 });
+}
+
+function closeProject() {
+  if (!savedRect) return;
+  gsap.to(ovcaption, { y:-8, opacity:0, duration:0.22, ease:'power2.in' });
+  const r=savedRect, cx=r.left+r.width/2, cy=r.top+r.height/2;
+  const targetClip = `inset(${(cy/VH*100).toFixed(3)}% ${((VW-cx)/VW*100).toFixed(3)}% ${((VH-cy)/VH*100).toFixed(3)}% ${(cx/VW*100).toFixed(3)}%)`;
+  const fromWork = overlayFromWork;
+  gsap.killTweensOf(overlay);
+  // fromTo ensures GSAP always knows the exact start state — no cached-state issues
+  gsap.fromTo(overlay,
+    { clipPath: 'inset(0% 0% 0% 0%)' },
+    {
+      clipPath: targetClip,
+      duration: 0.65, ease: 'expo.in', delay: 0.10,
+      onComplete() {
+        overlay.style.display='none';
+        gsap.set(overlay, { clearProps: 'clipPath' });
+        savedRect=null; overlayOpen=false; overlayFromWork=false;
+        document.body.classList.remove('overlay-open');
+        gsap.set(ovcaption, { y:0, opacity:1 });
+        // If opened from work panel, ensure it's still showing
+        if (fromWork) {
+          const wp = document.getElementById('work-panel');
+          if (wp && !wp.classList.contains('open')) {
+            window.openWork?.();
+          }
+        }
+      }
+    }
+  );
+}
+
+ovclose.addEventListener('click', closeProject);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeProject();
+    window.closeAbout?.();
+    window.closeWork?.();
+  }
+});
+
+/* ══════════════════════════════════════════════
+   LAZY FRAGMENT LOADER
+══════════════════════════════════════════════ */
+async function loadFragment(url, containerId, loadedFlag) {
+  if (window[loadedFlag]) return;
+  const res  = await fetch(url + '?v=' + Date.now());
+  const html = await res.text();
+  const container = document.getElementById(containerId);
+  container.innerHTML = html;
+  container.querySelectorAll('script').forEach(oldScript => {
+    const newScript = document.createElement('script');
+    newScript.textContent = oldScript.textContent;
+    document.body.appendChild(newScript);
+    oldScript.remove();
+  });
+  window[loadedFlag] = true;
+}
+
+/* ── ABOUT trigger ── */
+document.getElementById('about-trigger').addEventListener('click', async () => {
+  await loadFragment('about.html', 'about-panel-container', 'aboutLoaded');
+  window.openAbout();
+});
+
+// Fade in about trigger
+gsap.to('#about-trigger', { opacity:1, duration:1, delay:1.2 });
+
+/* ── WORK trigger ── */
+const workTrigger = document.getElementById('work-trigger');
+
+// Holds the raw closeWork from work.html (without history logic)
+let _rawCloseWork = null;
+
+async function openWorkWithHistory() {
+  await loadFragment('work.html', 'work-panel-container', 'workLoaded');
+  _rawCloseWork = window.closeWork;
+
+  // Wrap so all close paths (button, strips, Escape) also update history
+  window.closeWork = function() {
+    _rawCloseWork();
+    history.pushState({ panel: 'home' }, 'Arun Somasekharan — UI/UX Designer', '/');
+    document.title = 'Arun Somasekharan — UI/UX Designer';
+    window.closeWork = _rawCloseWork; // restore for next open cycle
+  };
+
+  window.openWork();
+  history.pushState({ panel: 'work' }, 'Work — Arun Somasekharan', '/work');
+  document.title = 'Work — Arun Somasekharan';
+}
+
+workTrigger.addEventListener('click', async e => {
+  e.preventDefault();
+  openWorkWithHistory();
+});
+workTrigger.addEventListener('mouseenter', () => document.body.classList.add('chov'));
+workTrigger.addEventListener('mouseleave', () => document.body.classList.remove('chov'));
+
+/* ── Handle browser back/forward ── */
+window.addEventListener('popstate', async e => {
+  const panel = e.state?.panel;
+  if (panel === 'work') {
+    await loadFragment('work.html', 'work-panel-container', 'workLoaded');
+    window.openWork();
+    document.title = 'Work — Arun Somasekharan';
+  } else {
+    const wp = document.getElementById('work-panel');
+    if (wp && wp.classList.contains('open')) {
+      // Call raw close — browser already moved the URL, no pushState needed
+      (_rawCloseWork || window.closeWork)();
+      window.closeWork = _rawCloseWork;
+      document.title = 'Arun Somasekharan — UI/UX Designer';
+    }
+  }
+});
+
+/* ── Auto-open if landing directly on /work ── */
+if (window.location.pathname === '/work') {
+  history.replaceState({ panel: 'work' }, 'Work — Arun Somasekharan', '/work');
+  document.title = 'Work — Arun Somasekharan';
+  openWorkWithHistory();
+} else {
+  history.replaceState({ panel: 'home' }, document.title, '/');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COLUMN LINE CURSOR BEND
+   Each vertical grid line warps toward the cursor using a
+   Gaussian displacement — subtle, same feel as dot scatter.
+═══════════════════════════════════════════════════════════ */
+(function initColLines() {
+  const svg      = document.getElementById('col-lines-svg');
+  const colPaths = [...svg.querySelectorAll('path')];
+  const FRACS    = [0.20, 0.40, 0.60, 0.80];
+  const SEGS     = 60;       // points per line — smooth curve
+  const H_RADIUS = 280;      // horizontal influence radius (px)
+  const SIGMA_Y  = 220;      // vertical gaussian spread (px)
+  const MAX_DISP = 14;       // max horizontal bend (px) — keep it subtle
+  const TWO_SIG2 = 2 * SIGMA_Y * SIGMA_Y;
+
+  // Smoothed mouse for the lines (light spring, slower than cursor ring)
+  let clx = mx, cly = my;
+
+  function tick() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    // Gentle smooth follow
+    clx += (mx - clx) * 0.08;
+    cly += (my - cly) * 0.08;
+
+    FRACS.forEach((frac, idx) => {
+      const lx    = frac * w;
+      const dx    = clx - lx;
+      const hdist = Math.abs(dx);
+      // Horizontal falloff — only lines within H_RADIUS feel the pull
+      const hfactor = Math.max(0, 1 - hdist / H_RADIUS);
+      const disp    = dx * MAX_DISP / H_RADIUS * hfactor * hfactor;
+
+      let d = `M ${lx} 0`;
+      for (let i = 1; i <= SEGS; i++) {
+        const y    = (i / SEGS) * h;
+        const dy   = cly - y;
+        const gaus = Math.exp(-(dy * dy) / TWO_SIG2);
+        d += ` L ${(lx + disp * gaus).toFixed(2)} ${y}`;
+      }
+      colPaths[idx].setAttribute('d', d);
+    });
+
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   WORK PANEL COLUMN LINE CURSOR BEND
+═══════════════════════════════════════════════════════════ */
+(function initWorkColLines() {
+  const svg      = document.getElementById('work-col-lines-svg');
+  if (!svg) return;
+  const colPaths = [...svg.querySelectorAll('path')];
+  const FRACS    = [0.20, 0.40, 0.60, 0.80];
+  const SEGS     = 60;
+  const H_RADIUS = 280;
+  const SIGMA_Y  = 220;
+  const MAX_DISP = 14;
+  const TWO_SIG2 = 2 * SIGMA_Y * SIGMA_Y;
+
+  let clx = mx, cly = my;
+
+  function tick() {
+    const panel = document.getElementById('work-panel');
+    if (!panel || !panel.classList.contains('open')) {
+      requestAnimationFrame(tick); return;
+    }
+    const w = panel.offsetWidth;
+    const h = panel.offsetHeight;
+
+    clx += (mx - clx) * 0.08;
+    cly += (my - cly) * 0.08;
+
+    FRACS.forEach((frac, idx) => {
+      const lx      = frac * w;
+      const dx      = clx - lx;
+      const hfactor = Math.max(0, 1 - Math.abs(dx) / H_RADIUS);
+      const disp    = dx * MAX_DISP / H_RADIUS * hfactor * hfactor;
+
+      let d = `M ${lx} 0`;
+      for (let i = 1; i <= SEGS; i++) {
+        const y    = (i / SEGS) * h;
+        const dy   = cly - y;
+        const gaus = Math.exp(-(dy * dy) / TWO_SIG2);
+        d += ` L ${(lx + disp * gaus).toFixed(2)} ${y}`;
+      }
+      colPaths[idx].setAttribute('d', d);
+    });
+
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   HERO DOT-GRID SCATTER — isolated WebGL module
+   Ink dots on cream bg physically scatter from cursor.
+   Clearly visible. Touch/mobile: disabled.
+═══════════════════════════════════════════════════════════ */
+(function initHeroDisplace() {
+  'use strict';
+
+  if (window.matchMedia('(pointer: coarse)').matches) return;
+  if (window.innerWidth < 768) return;
+
+  const stage  = document.getElementById('stage');
+  const canvas = document.getElementById('hero-gl');
+  if (!stage || !canvas) return;
+
+  /* alpha:true — canvas only draws dots, CSS bg shows through.
+     preserveDrawingBuffer keeps last frame when RAF loop stops. */
+  const gl = canvas.getContext('webgl', {
+    alpha: true, premultipliedAlpha: false,
+    antialias: false, depth: false, stencil: false,
+    preserveDrawingBuffer: true
+  });
+  if (!gl) return;
+
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+  const VS = `
+    attribute vec2 a_pos;
+    void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+  `;
+
+  /* ── Fragment shader ──────────────────────────────────────────
+     For each pixel, search a 7×7 neighbourhood of dot-grid cells.
+     Each dot's home position is displaced outward from the cursor
+     with a smoothstep falloff + ripple wave.
+     If this pixel falls within any displaced dot's radius → ink.
+     Otherwise → fully transparent (CSS bg shows through).
+  ────────────────────────────────────────────────────────────── */
+  const FS = `
+    precision mediump float;
+    uniform vec2  u_res;
+    uniform vec2  u_mouse;     /* physical px, Y-up */
+    uniform float u_intensity; /* 0–1 eased         */
+    uniform float u_time;
+
+    const float GRID   = 20.0;  /* dot spacing (physical px)           */
+    const float DOT_R  = 2.4;   /* dot radius (px)                     */
+    const float RADIUS = 300.0; /* cursor influence radius (physical px)*/
+    const float FORCE  = 70.0;  /* scatter distance — very visible      */
+
+    /* ink colour — matches --ink: #0e0e0e */
+    const vec3 INK = vec3(0.055, 0.055, 0.055);
+
+    void main() {
+      vec2 px   = gl_FragCoord.xy;
+      vec2 base = floor(px / GRID);
+
+      bool  hit     = false;
+      float topInfl = 0.0;
+
+      /* 9×9 search — covers FORCE up to 4×GRID = 80px, safe for FORCE=70 */
+      for (int dy = -4; dy <= 4; dy++) {
+        for (int dx = -4; dx <= 4; dx++) {
+          /* home position of this dot */
+          vec2 home = (base + vec2(float(dx), float(dy))) * GRID + GRID * 0.5;
+
+          /* influence: distance-based falloff, eased by global intensity */
+          float d   = length(home - u_mouse);
+          float inf = (1.0 - smoothstep(0.0, RADIUS, d)) * u_intensity;
+
+          /* ripple: rings emanate outward from cursor */
+          float wave = sin(d * 0.018 - u_time * 4.2) * 0.18 + 0.82;
+
+          /* displaced position: dot pushed outward */
+          vec2 dir  = normalize(home - u_mouse + vec2(0.0001));
+          vec2 pos  = home + dir * inf * FORCE * wave;
+
+          /* does this pixel fall inside the displaced dot? */
+          if (length(px - pos) < DOT_R + inf * 1.2) {
+            hit     = true;
+            topInfl = max(topInfl, inf);
+          }
+        }
+      }
+
+      if (!hit) { gl_FragColor = vec4(0.0); return; }
+
+      /* at rest: 18% opacity — subtle grain feel
+         near cursor: 28% — dots shimmer as they scatter */
+      float opac = mix(0.18, 0.28, topInfl);
+      gl_FragColor = vec4(INK, opac);
+    }
+  `;
+
+  function mkShader(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, mkShader(gl.VERTEX_SHADER,   VS));
+  gl.attachShader(prog, mkShader(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    canvas.remove(); return;
+  }
+  gl.useProgram(prog);
+
+  const vb = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+  gl.bufferData(gl.ARRAY_BUFFER,
+    new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  /* ── Uniforms ── */
+  const uRes   = gl.getUniformLocation(prog, 'u_res');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+  const uInten = gl.getUniformLocation(prog, 'u_intensity');
+  const uTime  = gl.getUniformLocation(prog, 'u_time');
+
+  /* ── State ── */
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  /* seed mouse far off-screen: dots show at home (no scatter) on load */
+  let tx = -9999, ty = -9999;
+  let smx = -9999 * dpr, smy = -9999 * dpr;
+  let intensity   = 1.0;   /* start at 1 so rest-state dots are visible */
+  let targetInten = 1.0;
+  let isRunning   = false;
+  const t0 = performance.now();
+
+  /* ── Resize ── */
+  function resize() {
+    canvas.width  = Math.round(stage.offsetWidth  * dpr);
+    canvas.height = Math.round(stage.offsetHeight * dpr);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+  }
+  resize();
+  new ResizeObserver(resize).observe(stage);
+
+  /* ── Draw one frame ── */
+  function draw() {
+    const t = (performance.now() - t0) * 0.001;
+    smx += (tx * dpr - smx) * 0.10;
+    smy += (ty * dpr - smy) * 0.10;
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(uMouse, smx, smy);
+    gl.uniform1f(uInten, intensity);
+    gl.uniform1f(uTime,  t);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  /* ── RAF loop — self-terminates when scatter fully eased out ── */
+  function tick() {
+    /* ease scatter in quickly, back out slowly */
+    const spd = targetInten > intensity ? 0.075 : 0.028;
+    intensity += spd * (targetInten - intensity);
+    draw();
+    /* keep running while scattering; rest-state dots need no animation */
+    if (Math.abs(intensity - targetInten) > 0.002 || targetInten > 0.01) {
+      requestAnimationFrame(tick);
+    } else {
+      isRunning = false;
+      /* preserveDrawingBuffer keeps the rest-state dots visible */
+    }
+  }
+  function start() { if (!isRunning) { isRunning = true; requestAnimationFrame(tick); } }
+
+  /* ── Events ── */
+  stage.addEventListener('mousemove', (e) => {
+    tx = e.clientX;
+    ty = stage.offsetHeight - e.clientY; /* Y-flip: WebGL origin bottom-left */
+    targetInten = 1.0;
+    start();
+  }, { passive: true });
+
+  stage.addEventListener('mouseleave', () => {
+    targetInten = 0.0;
+    start(); /* run loop to ease scatter back out */
+  });
+
+  /* ── Initial render: dots at home, no scatter ── */
+  draw();
+
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   WORK PANEL DOT-GRID — same shader, white dots on black bg
+═══════════════════════════════════════════════════════════ */
+(function initWorkDisplace() {
+  'use strict';
+  if (window.matchMedia('(pointer: coarse)').matches) return;
+  if (window.innerWidth < 768) return;
+
+  const panel  = document.getElementById('work-panel');
+  const canvas = document.getElementById('work-gl');
+  if (!panel || !canvas) return;
+
+  const gl = canvas.getContext('webgl', {
+    alpha: true, premultipliedAlpha: false,
+    antialias: false, depth: false, stencil: false,
+    preserveDrawingBuffer: true
+  });
+  if (!gl) return;
+
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+  const VS = `
+    attribute vec2 a_pos;
+    void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+  `;
+  const FS = `
+    precision mediump float;
+    uniform vec2  u_res;
+    uniform vec2  u_mouse;
+    uniform float u_intensity;
+    uniform float u_time;
+
+    const float GRID   = 20.0;
+    const float DOT_R  = 2.4;
+    const float RADIUS = 300.0;
+    const float FORCE  = 70.0;
+    const vec3  INK    = vec3(1.0, 1.0, 1.0); /* white dots */
+
+    void main() {
+      vec2 px   = gl_FragCoord.xy;
+      vec2 base = floor(px / GRID);
+      bool  hit     = false;
+      float topInfl = 0.0;
+      for (int dy = -4; dy <= 4; dy++) {
+        for (int dx = -4; dx <= 4; dx++) {
+          vec2 home = (base + vec2(float(dx), float(dy))) * GRID + GRID * 0.5;
+          float d   = length(home - u_mouse);
+          float inf = (1.0 - smoothstep(0.0, RADIUS, d)) * u_intensity;
+          float wave = sin(d * 0.018 - u_time * 4.2) * 0.18 + 0.82;
+          vec2 dir  = normalize(home - u_mouse + vec2(0.0001));
+          vec2 pos  = home + dir * inf * FORCE * wave;
+          if (length(px - pos) < DOT_R + inf * 1.2) {
+            hit     = true;
+            topInfl = max(topInfl, inf);
+          }
+        }
+      }
+      if (!hit) { gl_FragColor = vec4(0.0); return; }
+      /* rest: very subtle grid; near cursor: dots scatter and brighten */
+      float opac = mix(0.07, 0.38, topInfl);
+      gl_FragColor = vec4(INK, opac);
+    }
+  `;
+
+  function mkShader(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s); return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, mkShader(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, mkShader(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { canvas.remove(); return; }
+  gl.useProgram(prog);
+
+  const vb = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  const uRes   = gl.getUniformLocation(prog, 'u_res');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+  const uInten = gl.getUniformLocation(prog, 'u_intensity');
+  const uTime  = gl.getUniformLocation(prog, 'u_time');
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let tx = -9999, ty = -9999;
+  let smx = -9999 * dpr, smy = -9999 * dpr;
+  let intensity = 1.0, targetInten = 1.0;
+  let isRunning = false;
+  const t0 = performance.now();
+
+  function resize() {
+    canvas.width  = Math.round(panel.offsetWidth  * dpr);
+    canvas.height = Math.round(panel.offsetHeight * dpr);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+  }
+  resize();
+  new ResizeObserver(resize).observe(panel);
+
+  function draw() {
+    const t = (performance.now() - t0) * 0.001;
+    smx += (tx * dpr - smx) * 0.10;
+    smy += (ty * dpr - smy) * 0.10;
+    gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(uMouse, smx, smy);
+    gl.uniform1f(uInten, intensity);
+    gl.uniform1f(uTime,  t);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  function tick() {
+    const spd = targetInten > intensity ? 0.075 : 0.028;
+    intensity += spd * (targetInten - intensity);
+    draw();
+    if (Math.abs(intensity - targetInten) > 0.002 || targetInten > 0.01) {
+      requestAnimationFrame(tick);
+    } else { isRunning = false; }
+  }
+  function start() { if (!isRunning) { isRunning = true; requestAnimationFrame(tick); } }
+
+  panel.addEventListener('mousemove', (e) => {
+    tx = e.clientX;
+    ty = panel.offsetHeight - e.clientY;
+    targetInten = 1.0; start();
+  }, { passive: true });
+
+  panel.addEventListener('mouseleave', () => { targetInten = 1.0; start(); });
+
+  /* draw initial rest-state grid as soon as panel first opens */
+  draw();
+  start();
+})();
+</script>
+</body>
+</html>

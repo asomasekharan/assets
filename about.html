@@ -1,0 +1,268 @@
+<style>
+/* ── ABOUT PANEL ── */
+#about-panel {
+  position:fixed; inset:0; z-index:600;
+  display:none; flex-direction:column;
+  pointer-events:none;
+  overflow:hidden;
+}
+#about-panel.open { pointer-events:all; display:flex; }
+
+/* Strip container — sits behind content, holds the black strips */
+#about-strips {
+  position:absolute; inset:0;
+  pointer-events:none;
+  z-index:0;
+}
+.astrip {
+  position:absolute; top:0; bottom:0;
+  width:24px; height:100%;
+  background:#0a0a0a;
+  transform:translateY(110vh);
+  will-change:transform;
+}
+
+/* Content area — sits above strips */
+#about-content {
+  position:relative; z-index:2;
+  display:flex; flex-direction:column;
+  height:100%;
+  opacity:0;
+  pointer-events:none;
+}
+#about-content.visible {
+  opacity:1;
+  pointer-events:none;
+}
+#about-content.visible #about-scroll { pointer-events:all; }
+
+/* Close cursor zone */
+#about-panel.open { cursor:none; }
+
+/* scroll container */
+#about-scroll {
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:100px 80px 100px 22%;
+  scrollbar-width:none;
+  scroll-behavior:smooth;
+}
+#about-scroll::-webkit-scrollbar { display:none; }
+
+/* chapter label */
+#about-chapter {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px; font-weight:700; letter-spacing:.22em;
+  text-transform:uppercase; color:#444;
+  margin-bottom:60px;
+  opacity:0;
+}
+
+/* body text */
+#about-body {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:clamp(18px, 2.1vw, 30px);
+  font-weight:400;
+  line-height:1.65;
+  letter-spacing:-.005em;
+  text-align:left;
+  max-width:520px;
+}
+#about-body .w {
+  color:#333;
+  transition: color .45s ease;
+  display:inline;
+}
+#about-body .w.lit { color:#f5f4f0; }
+
+/* close button */
+#about-close {
+  position:absolute; top:28px; right:40px; z-index:10;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px; font-weight:700; letter-spacing:.22em;
+  text-transform:uppercase; background:none; border:none;
+  border-bottom:1px solid #444; padding-bottom:2px;
+  color:#888; cursor:none; outline:none;
+  transition:color .2s, border-color .2s;
+  pointer-events:all;
+}
+#about-close:hover { color:#f5f4f0; border-color:#f5f4f0; }
+
+/* Cursor shows ✕ when hovering the dark bg outside content */
+#about-panel.open #about-strips { pointer-events:all; cursor:none; }
+
+/* ── Panel close button ── */
+.about-panel-close {
+  position:absolute; top:28px; right:40px; z-index:20;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px; font-weight:700; letter-spacing:.22em;
+  text-transform:uppercase; background:none; border:none;
+  border-bottom:1px solid; padding-bottom:2px;
+  cursor:none; outline:none;
+  pointer-events:all;
+  opacity:0;
+  transition:opacity .3s ease, color .2s, border-color .2s;
+}
+#about-content.visible .about-panel-close { opacity:1; }
+#about-panel .about-panel-close       { color:#666; border-color:#444; }
+#about-panel .about-panel-close:hover { color:#f5f4f0; border-color:#f5f4f0; }
+</style>
+
+<!-- ABOUT PANEL -->
+<div id="about-panel">
+  <div id="about-strips"></div>
+  <div id="about-content">
+    <button class="panel-close about-panel-close" id="about-close-btn">Close &nbsp;✕</button>
+    <div id="about-scroll">
+      <div id="about-chapter">04 — About</div>
+      <div id="about-body"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Shuffle helper
+  function shuffled(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  const aboutPanel    = document.getElementById('about-panel');
+  const aboutStrips   = document.getElementById('about-strips');
+  const aboutContent  = document.getElementById('about-content');
+  const aboutScroll   = document.getElementById('about-scroll');
+  const aboutChapter  = document.getElementById('about-chapter');
+  const aboutBody     = document.getElementById('about-body');
+
+  const ABOUT_TEXT = `I design digital experiences that don't try too hard—but work exceptionally well. With 17 years in UI/UX, I've learned that great design isn't about decoration, it's about decisions. What to show, what to remove, and what truly matters. I tend to work quietly, but think deeply. Whether it's a product, a flow, or a system, I aim for work that feels obvious in hindsight—but only because it's been carefully crafted.`;
+
+  // Build word spans
+  ABOUT_TEXT.split(' ').forEach((word) => {
+    const sp = document.createElement('span');
+    sp.className = 'w';
+    sp.textContent = word + ' ';
+    aboutBody.appendChild(sp);
+  });
+  const wordSpans = aboutBody.querySelectorAll('.w');
+
+  // Build strips
+  const STRIP_H = 24;
+  let strips = [];
+
+  function buildStrips() {
+    aboutStrips.innerHTML = '';
+    strips = [];
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const count = Math.ceil(vw / STRIP_H) + 2;
+    for (let i = 0; i < count; i++) {
+      const s = document.createElement('div');
+      s.className = 'astrip';
+      s.style.left = (i * STRIP_H) + 'px';
+      gsap.set(s, { y: vh });
+      aboutStrips.appendChild(s);
+      strips.push(s);
+    }
+  }
+  buildStrips();
+
+  function updateWordLights() {
+    const scrollTop  = aboutScroll.scrollTop;
+    const viewHeight = aboutScroll.clientHeight;
+    const progress = scrollTop / (aboutScroll.scrollHeight - viewHeight || 1);
+    const total = wordSpans.length;
+    const alwaysLit = Math.floor(total * 0.15);
+    const litCount  = alwaysLit + Math.floor(progress * total * 1.1);
+    wordSpans.forEach((w, i) => {
+      if (i < litCount) w.classList.add('lit');
+      else w.classList.remove('lit');
+    });
+  }
+
+  window.openAbout = function openAbout() {
+    const vh = window.innerHeight;
+    aboutPanel.classList.add('open');
+    document.body.classList.add('about-open');
+    document.body.classList.add('about-panel-open');
+    aboutContent.classList.remove('visible');
+    aboutScroll.scrollTop = 0;
+    wordSpans.forEach(w => w.classList.remove('lit'));
+
+    strips.forEach(s => gsap.set(s, { y: vh }));
+
+    const ordered  = shuffled([...strips]);
+    const total    = ordered.length;
+    const totalDur = 0.55;
+
+    ordered.forEach((s, i) => {
+      const delay = (i / total) * totalDur * 0.6;
+      gsap.fromTo(s,
+        { y: vh },
+        { y: 0, duration: 0.42, ease: 'expo.out', delay }
+      );
+    });
+
+    const revealDelay = totalDur * 0.55 + 0.12;
+    gsap.delayedCall(revealDelay, () => {
+      aboutContent.classList.add('visible');
+      gsap.fromTo(aboutChapter, { opacity:0, y:16 }, { opacity:1, y:0, duration:0.6, ease:'expo.out' });
+      updateWordLights();
+    });
+  };
+
+  window.closeAbout = function closeAbout() {
+    const vh = window.innerHeight;
+    document.body.classList.remove('cursor-close');
+
+    gsap.to(aboutContent, { opacity: 0, duration: 0.30, ease: 'power2.out' });
+
+    const ordered  = shuffled([...strips]);
+    const total    = ordered.length;
+    const closeDur = 0.60;
+
+    ordered.forEach((s, i) => {
+      const delay = (i / total) * closeDur * 0.45;
+      gsap.fromTo(s,
+        { y: 0 },
+        { y: vh, duration: 0.48, ease: 'power3.out', delay }
+      );
+    });
+
+    gsap.delayedCall(closeDur * 0.45 + 0.30, () => {
+      aboutContent.classList.remove('visible');
+      aboutPanel.classList.remove('open');
+      document.body.classList.remove('about-open');
+      document.body.classList.remove('about-panel-open');
+      strips.forEach(s => gsap.set(s, { y: vh }));
+      gsap.set(aboutContent, { clearProps: 'opacity' });
+    });
+  };
+
+  // Event listeners
+  aboutStrips.addEventListener('click', window.closeAbout);
+  aboutStrips.addEventListener('mouseenter', () => document.body.classList.add('cursor-close'));
+  aboutStrips.addEventListener('mouseleave', () => document.body.classList.remove('cursor-close'));
+
+  aboutScroll.addEventListener('scroll', updateWordLights);
+
+  const aboutCloseBtn = document.getElementById('about-close-btn');
+  aboutCloseBtn.addEventListener('click', window.closeAbout);
+  aboutCloseBtn.addEventListener('mouseenter', () => document.body.classList.add('chov'));
+  aboutCloseBtn.addEventListener('mouseleave', () => document.body.classList.remove('chov'));
+
+  // Escape key for about panel
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && aboutPanel.classList.contains('open')) {
+      window.closeAbout();
+    }
+  });
+
+  window.aboutLoaded = true;
+})();
+</script>
